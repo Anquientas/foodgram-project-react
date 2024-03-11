@@ -1,6 +1,6 @@
 from django.db import models
 
-from .validators import validate_slug
+from .validators import validate_color, validate_slug
 
 
 MAX_LENGTH_NAME = 200
@@ -19,6 +19,7 @@ class Tag():
         verbose_name='Цвет в HEX',
         blank=True,
         max_length=MAX_LENGTH_COLOR,
+        validators=(validate_color,)
     )
     slug = models.CharField(
         verbose_name='Уникальный слаг',
