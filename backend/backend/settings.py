@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'djoser',
     'api.apps.ApiConfig',
     'users.apps.UsersConfig',
+    'recipes.apps.RecipesConfig',
+    'tags.apps.TagsConfig',
+    'ingredients.apps.IngredientsConfig',
 ]
 
 MIDDLEWARE = [
