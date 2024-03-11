@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # 'rest_framework.authtoken',
     'djoser',
     'api.apps.ApiConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -145,3 +146,8 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('JWT',),
 }
+
+
+# constats
+
+USER_ENDPOINT_SUFFIX = 'me'
