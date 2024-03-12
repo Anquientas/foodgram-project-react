@@ -172,6 +172,12 @@ SIMPLE_JWT = {
 }
 
 
+# User model
+
+AUTH_USER_MODEL = 'reviews.User'
+
+
 # constats
 
 USER_ENDPOINT_SUFFIX = 'me'
+

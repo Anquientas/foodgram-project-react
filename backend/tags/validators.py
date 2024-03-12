@@ -19,10 +19,6 @@ ZERO_SYMBOL_IN_COLOR = (
 )
 
 
-def check_banned_symbols(template, text):
-    return re.sub(template, '', text)
-
-
 def validate_slug(slug):
     banned_symbols = re.sub(r'[-a-zA-Z0-9_]+$', '', slug)
     if banned_symbols:
@@ -37,7 +33,7 @@ def validate_slug(slug):
 
 def validate_color(color):
     message = ''
-    banned_symbols = re.sub(r'[a-z\d]+$\b', '', color[1:])
+    banned_symbols = re.sub(r'[a-fA-F\d]+$\b', '', color[1:])
     if banned_symbols:
         message = BANNED_SYMBOL_IN_COLOR.format(
             color=color,

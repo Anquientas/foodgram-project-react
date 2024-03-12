@@ -5,16 +5,18 @@ MAX_LENGTH_NAME = 200
 MAX_LENGTH_MEASUREMENT_UNIT = 200
 
 
-class Ingedient():
-    """Класс тэга."""
+class Ingredient(models.Model):
+    """Класс ингредиента."""
 
     name = models.CharField(
         verbose_name='Название',
         max_length=MAX_LENGTH_NAME,
+        help_text='Введите название ингредиента'
     )
     measurement_unit = models.CharField(
         verbose_name='Единица измерения',
         max_length=MAX_LENGTH_MEASUREMENT_UNIT,
+        help_text='Введите единицу измерения'
     )
 
     class Meta:
