@@ -11,7 +11,13 @@ User = get_user_model()
 
 MAX_LENGTH_NAME = 200
 INGREDIENT_IN_RECIPE_IS_NOT_UNIQUE = (
-    'Ингредиенты в рецепте не могут повторятся! '
+    'Ингредиенты в рецепте не могут повторятся!'
+)
+RECIPE_IN_SHOPPING_CART_IS_NOT_UNIQUE = (
+    'Рецепты в списке покупок не могут повторятся!'
+)
+RECIPE_IN_FAVORITE_IS_NOT_UNIQUE = (
+    'Рецепты в списке избранных не могут повторятся!'
 )
 
 
@@ -110,4 +116,78 @@ class IngredientRecipe(models.Model):
             f'Рецепт: {self.recipe}, '
             f'ингредиент: {self.ingredient}, '
             f'количество: {self.amount}'
+        )
+
+
+class ShoppingCart(models.Model):
+    """
+    Список покупок пользователя.
+    Для одного пользователя рецепты в списке покупок не могут повторятся.
+    """
+
+    user = models.ForeignKey(
+        verbose_name='Пользователь',
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        help_text='Введите пользователя'
+    )
+    recipe = models.ForeignKey(
+        verbose_name='Рецепт',
+        on_delete=models.CASCADE,
+        related_name='shopping_cart',
+        help_text='Введите рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_recipe_in_shopping_cart_for_user',
+                message=RECIPE_IN_SHOPPING_CART_IS_NOT_UNIQUE
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f'Рецепт: {self.recipe}, в списке покупок '
+            f'пользователя {self.user}.'
+        )
+
+
+class Favorite(models.Model):
+    """
+    Список избранных рецептов пользователя.
+    Для одного пользователя рецепты в списке покупок не могут повторятся.
+    """
+
+    user = models.ForeignKey(
+        verbose_name='Пользователь',
+        on_delete=models.CASCADE,
+        related_name='favorite',
+        help_text='Введите пользователя'
+    )
+    recipe = models.ForeignKey(
+        verbose_name='Рецепт',
+        on_delete=models.CASCADE,
+        related_name='favorite',
+        help_text='Введите рецепт'
+    )
+
+    class Meta:
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_recipe_in_favorite_for_user',
+                message=RECIPE_IN_FAVORITE_IS_NOT_UNIQUE
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f'Рецепт: {self.recipe}, в списке избранных '
+            f'пользователя {self.user}.'
         )
