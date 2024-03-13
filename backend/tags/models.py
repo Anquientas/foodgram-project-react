@@ -8,7 +8,7 @@ MAX_LENGTH_COLOR = 7
 MAX_LENGTH_SLUG = 200
 
 
-class Tag():
+class Tag(models.Model):
     """Класс тега."""
 
     name = models.CharField(

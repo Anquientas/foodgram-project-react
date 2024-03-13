@@ -73,13 +73,17 @@ class Subscribe(models.Model):
     """
 
     author = models.ForeignKey(
+        User,
         verbose_name='Подписка на автора рецепта',
         related_name='signed',
+        on_delete=models.CASCADE,
         help_text='Подписаться на автора рецепта'
     )
     user = models.ForeignKey(
+        User,
         verbose_name='Пользователь',
         related_name='signer',
+        on_delete=models.CASCADE,
         help_text='Текущий пользователь'
     )
 
@@ -88,14 +92,12 @@ class Subscribe(models.Model):
         verbose_name_plural = 'Мои подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
-                name='unique_recipe_ingredient',
-                message=AUTHOR_AND_USER_IS_NOT_UNIQUE
+                fields=['author', 'user'],
+                name='unique_author_and_user',
             ),
             models.CheckConstraint(
                 check=~models.Q(user=models.F('author')),
                 name='check_user_is_author',
-                message=AUTHOR_NOT_SIGNER_TO_AUTHOR
             ),
         ]
 

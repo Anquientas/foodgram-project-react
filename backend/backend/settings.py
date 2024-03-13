@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'rest_framework_simplejwt',
     # 'rest_framework.authtoken',
@@ -88,26 +89,26 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = os.getenv('DATABASES', 'postgresql')
 
-if DATABASES != 'postgresql':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# For test in develop
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
-            'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', ''),
-            'PORT': os.getenv('DB_PORT', 5432)
-        }
-    }
+}
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DB', 'foodgram'),
+#         'USER': os.getenv('POSTGRES_USER', 'foodgram_user'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', ''),
+#         'PORT': os.getenv('DB_PORT', 5432)
+#     }
+# }
 
 
 # Password validation
@@ -165,6 +166,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 }
 
 SIMPLE_JWT = {
@@ -174,7 +176,7 @@ SIMPLE_JWT = {
 
 # User model
 
-AUTH_USER_MODEL = 'reviews.User'
+AUTH_USER_MODEL = 'users.User'
 
 
 # constats

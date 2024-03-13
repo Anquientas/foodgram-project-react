@@ -5,7 +5,6 @@ from .validators import validate_amount, validate_cooking_time
 from ingredients.models import Ingredient
 from tags.models import Tag
 
-
 User = get_user_model()
 
 
@@ -41,7 +40,7 @@ class Recipe(models.Model):
         through='IngredientRecipe',
         help_text='Введите ингредиент'
     )
-    tags = models.ForeignKey(
+    tags = models.ManyToManyField(
         Tag,
         verbose_name='Название тега',
         help_text='Выберите тег'
@@ -83,9 +82,9 @@ class IngredientRecipe(models.Model):
 
     recipe = models.ForeignKey(
         Recipe,
-        related_name='recipe_ingredients',
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
         help_text='Выберите рецепт'
     )
     ingredient = models.ForeignKey(
@@ -107,7 +106,6 @@ class IngredientRecipe(models.Model):
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
                 name='unique_recipe_ingredient',
-                message=INGREDIENT_IN_RECIPE_IS_NOT_UNIQUE
             )
         ]
 
@@ -126,12 +124,14 @@ class ShoppingCart(models.Model):
     """
 
     user = models.ForeignKey(
+        User,
         verbose_name='Пользователь',
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         help_text='Введите пользователя'
     )
     recipe = models.ForeignKey(
+        Recipe,
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
         related_name='shopping_cart',
@@ -145,7 +145,6 @@ class ShoppingCart(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
                 name='unique_recipe_in_shopping_cart_for_user',
-                message=RECIPE_IN_SHOPPING_CART_IS_NOT_UNIQUE
             )
         ]
 
@@ -163,12 +162,14 @@ class Favorite(models.Model):
     """
 
     user = models.ForeignKey(
+        User,
         verbose_name='Пользователь',
         on_delete=models.CASCADE,
         related_name='favorite',
         help_text='Введите пользователя'
     )
     recipe = models.ForeignKey(
+        Recipe,
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
         related_name='favorite',
@@ -182,7 +183,6 @@ class Favorite(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
                 name='unique_recipe_in_favorite_for_user',
-                message=RECIPE_IN_FAVORITE_IS_NOT_UNIQUE
             )
         ]
 
