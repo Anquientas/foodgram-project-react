@@ -4,12 +4,13 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     ...
 )
+from tags.views import TagViewSet
 
 
 router_v1 = SimpleRouter()
 router_v1.register('ingredients', ..., basename='ingredients')
 router_v1.register('recipes', ..., basename='recipes')
-router_v1.register('tags', ..., basename='tags')
+router_v1.register('tags', TagViewSet, basename='tags')
 router_v1.register('users', ..., basename='users')
 
 urlpatterns = [
