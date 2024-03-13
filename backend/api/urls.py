@@ -14,14 +14,6 @@ router_v1.register('users', ..., basename='users')
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),
-    path('v1/auth/', include(auth_urls))
-]
-
-
-
-
-urlpatterns = [
-    (...),
-    url(r'^auth/', include('djoser.urls')),
-    url(r'^auth/', include('djoser.urls.jwt')),
+    # path('v1/auth/', include('djoser.urls')),
+    path('v1/auth/', include('djoser.urls.authtoken')),
 ]
