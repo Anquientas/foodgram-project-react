@@ -3,16 +3,22 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework.serializers import (
     ModelSerializer,
-    PrimaryKeyRelatedField,
+    # PrimaryKeyRelatedField,
     ReadOnlyField,
     SerializerMethodField,
     ImageField
 )
 from rest_framework.validators import ValidationError
 
-from .models import Recipe, IngredientRecipe, Favorite, ShoppingCart
-from tags.serializers import TagSerializer
-from users.serializers import UserSerializer
+from .models import (
+    Recipe,
+    IngredientRecipe,
+    Favorite,
+    ShoppingCart,
+    Tag,
+    Ingredient
+)
+# from users.serializers import UserSerializer
 
 
 TAGS_NEED = 'Необходимо выбрать тег!'
@@ -26,6 +32,24 @@ class Base64ImageField(ImageField):
             ext = format.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
         return super().to_internal_value(data)
+
+
+class TagSerializer(ModelSerializer):
+    """Сериализатор для модели тега."""
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+        read_only_fields = '__all__'
+
+
+class IngredientSerializer(ModelSerializer):
+    """Сериализатора для модели ингредиента."""
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')
+        read_only_fields = '__all__'
 
 
 class IngredientRecipeSerializer(ModelSerializer):
@@ -45,7 +69,7 @@ class IngredientRecipeSerializer(ModelSerializer):
 
 class RecipeGetSerializer(ModelSerializer):
     """Сериализатор для модели рецепта при чтении данных."""
-    author = UserSerializer()
+    # author = UserSerializer()
     tags = TagSerializer(
         many=True,
         read_only=True
@@ -91,7 +115,7 @@ class RecipeGetSerializer(ModelSerializer):
 class RecipeSerializer(ModelSerializer):
     """Сериализатор для модели рецепта при редактировании данных."""
 
-    author = UserSerializer()
+    # author = UserSerializer()
     tags = TagSerializer(
         many=True,
     )
