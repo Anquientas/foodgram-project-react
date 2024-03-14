@@ -8,5 +8,5 @@ class TagSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'measurement_unit')
+        fields = ('id', 'name', 'color', 'slug')
         read_only_fields = '__all__'
