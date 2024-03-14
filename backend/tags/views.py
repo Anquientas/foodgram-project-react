@@ -1,5 +1,5 @@
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework.permissions import AllowAny
 
 
@@ -9,7 +9,8 @@ from .serializers import TagSerializer
 
 class TagViewSet(ListModelMixin,
                  RetrieveModelMixin,
-                 GenericViewSet):
+                #  ReadOnlyModelViewSet,
+                 GenericViewSet,):
     """Вьюсет для модели тегов."""
 
     queryset = Tag.objects.all()
