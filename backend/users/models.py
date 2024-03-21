@@ -2,19 +2,12 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from .validators import validate_username
-
-
-MAX_LENGTH_USERNAME = 150
-MAX_LENGTH_EMAIL = 254
-MAX_LENGTH_FIRSTNAME = 150
-MAX_LENGTH_LASTNAME = 150
-MAX_LENGTH_PASSWORD = 150
-
-AUTHOR_AND_USER_IS_NOT_UNIQUE = (
-    'Пользователь и автор рецепта не могут повторяться!'
-)
-AUTHOR_NOT_SIGNER_TO_AUTHOR = (
-    'Автор рецепта не может подписываться сам на себя!'
+from backend.settings import (
+    MAX_LENGTH_EMAIL,
+    MAX_LENGTH_FIRSTNAME,
+    MAX_LENGTH_LASTNAME,
+    MAX_LENGTH_PASSWORD,
+    MAX_LENGTH_USERNAME
 )
 
 

@@ -29,10 +29,11 @@ User = get_user_model()
 
 INGREDIENTS_NEED = 'Необходимо добавить хотя бы один ингредиент!'
 INGREDIENT_REPEAT = 'Ингредиент {ingredient} повторяется!'
-INGREDIENT_ZERO = (
+INGREDIENT_AMOUNT = (
     'Количество единиц измерения ингредиента {ingredient} '
     'должно быть не менее 1. Сейчас - {amount}!'
 )
+
 TAGS_NEED = 'Необходимо добавить хотя бы один тег!'
 TAG_REPEAT = 'Ингредиент {tag} повторяется!'
 
@@ -69,7 +70,10 @@ class CustomUserSerializer(ModelSerializer):
     def get_is_subscribed(self, author):
         user = self.context.get('request').user
         if not user.is_anonymous:
-            return Subscribe.objects.filter(user=user, author=author).exists()
+            return Subscribe.objects.filter(
+                user=user,
+                author=author
+            ).exists()
         return False
 
 
@@ -98,26 +102,25 @@ class SubscribeSerializer(ModelSerializer):
             'recipes_count'
         )
 
-    def get_is_subscribed(self, obj):
+    def get_is_subscribed(self, subscribe):
         user = self.context.get('request').user
         if not user.is_anonymous:
             return Subscribe.objects.filter(
-                author=obj.author,
+                author=subscribe.author,
                 user=user
             ).exists()
         return False
 
-    def get_recipes(self, obj):
-        # Что есть obj? subscribe
+    def get_recipes(self, subscribe):
         request = self.context.get('request')
-        recipes = Recipe.objects.filter(author=obj.author)
+        recipes = Recipe.objects.filter(author=subscribe.author)
         limit = request.GET.get('recipes_limit')
         if limit and limit.isdigit():
             recipes = recipes[:int(limit)]
         return RecipeSubscribeSerializer(recipes, many=True).data
 
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj.author).count()
+    def get_recipes_count(self, subscribe):
+        return Recipe.objects.filter(author=subscribe.author).count()
 
     def validate(self, data):
         request = self.context.get('request')
@@ -134,8 +137,8 @@ class SubscribeSerializer(ModelSerializer):
         if (
             request.method == 'DEL'
             and not Subscribe.objects.filter(
-                author=author.username,
-                user=user.username
+                author=author,
+                user=user
             ).exists()
         ):
             raise ValidationError(
@@ -216,14 +219,14 @@ class RecipeReadSerializer(ModelSerializer):
         read_only_fields = ('__all__',)
 
     def get_is_favorited(self, recipe):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
+        # user = self.context.get('request').user
+        if not self.context.get('request').user.is_anonymous:
             return Favorite.objects.filter(recipe=recipe).exists()
         return False
 
     def get_is_in_shopping_cart(self, recipe):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
+        # user = self.context.get('request').user
+        if not self.context.get('request').user.is_anonymous:
             return ShoppingCart.objects.filter(recipe=recipe).exists()
         return False
 
@@ -247,8 +250,14 @@ class RecipeSerializer(ModelSerializer):
     при создании и редактировании данных.
     """
 
-    ingredients = AddIngredientInRecipeSerializer(many=True, write_only=True)
-    tags = PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    ingredients = AddIngredientInRecipeSerializer(
+        many=True,
+        write_only=True
+    )
+    tags = PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
     image = Base64ImageField()
     author = CustomUserSerializer(default=CurrentUserDefault())
     is_favorited = SerializerMethodField()
@@ -281,7 +290,7 @@ class RecipeSerializer(ModelSerializer):
             amount = int(unit_ingredient['amount'])
             if amount < 1:
                 raise ValidationError(
-                    {'ingredients': INGREDIENT_REPEAT.format(
+                    {'ingredients': INGREDIENT_AMOUNT.format(
                         ingredient=ingredient.name,
                         amount=amount
                     )}
@@ -349,14 +358,14 @@ class RecipeSerializer(ModelSerializer):
         return super().update(instance, validated_data)
 
     def get_is_favorited(self, recipe):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
+        # user = self.context.get('request').user
+        if not self.context.get('request').user.is_anonymous:
             return Favorite.objects.filter(recipe=recipe).exists()
         return False
 
     def get_is_in_shopping_cart(self, recipe):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
+        # user = self.context.get('request').user
+        if not self.context.get('request').user.is_anonymous:
             return ShoppingCart.objects.filter(recipe=recipe).exists()
         return False
 
@@ -364,10 +373,22 @@ class RecipeSerializer(ModelSerializer):
 class FavoriteSerializer(ModelSerializer):
     """Сериализатор для модели избранных рецептов пользователя (Favorite)."""
 
-    id = PrimaryKeyRelatedField(source='recipe.id', read_only=True)
-    name = ReadOnlyField(source='recipe.name', read_only=True)
-    image = ImageField(source='recipe.image', read_only=True)
-    cooking_time = IntegerField(source='recipe.cooking_time', read_only=True)
+    id = PrimaryKeyRelatedField(
+        source='recipe.id',
+        read_only=True
+    )
+    name = ReadOnlyField(
+        source='recipe.name',
+        read_only=True
+    )
+    image = ImageField(
+        source='recipe.image',
+        read_only=True
+    )
+    cooking_time = IntegerField(
+        source='recipe.cooking_time',
+        read_only=True
+    )
 
     class Meta:
         model = Favorite
@@ -377,10 +398,22 @@ class FavoriteSerializer(ModelSerializer):
 class ShoppingCartSerializer(ModelSerializer):
     """Сериализатор для модели списка покупок пользователя (ShoppingCart)."""
 
-    id = PrimaryKeyRelatedField(source='recipe.id', read_only=True)
-    name = ReadOnlyField(source='recipe.name', read_only=True)
-    image = ImageField(source='recipe.image', read_only=True)
-    cooking_time = IntegerField(source='recipe.cooking_time', read_only=True)
+    id = PrimaryKeyRelatedField(
+        source='recipe.id',
+        read_only=True
+    )
+    name = ReadOnlyField(
+        source='recipe.name',
+        read_only=True
+    )
+    image = ImageField(
+        source='recipe.image',
+        read_only=True
+    )
+    cooking_time = IntegerField(
+        source='recipe.cooking_time',
+        read_only=True
+    )
 
     class Meta:
         model = ShoppingCart

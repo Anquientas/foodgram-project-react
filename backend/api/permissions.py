@@ -1,7 +1,7 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
+class IsAuthorOrAdminOrReadOnly(BasePermission):
     """
     Класс, определяющий правада доуступа следующим образом:
     - просмотр - доступно всем;
@@ -9,17 +9,16 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        return (request.method in permissions.SAFE_METHODS
+        return (request.method in SAFE_METHODS
                 or request.user.is_authenticated)
 
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
+        if request.method in SAFE_METHODS:
             return True
-        return (obj.author == request.user
-                or request.user.is_staff)
+        return obj.author == request.user or request.user.is_staff
 
 
-class IsCurrentUserOrAdminOrReadOnly(permissions.BasePermission):
+class IsCurrentUserOrAdminOrReadOnly(BasePermission):
     """
     Класс, определяющий правада доуступа следующим образом:
     - просмотр - доступно всем;
@@ -28,6 +27,6 @@ class IsCurrentUserOrAdminOrReadOnly(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
+        if request.method in SAFE_METHODS:
             return True
-        return (obj.id == request.user.id or request.user.is_staff)
+        return obj.id == request.user.id or request.user.is_staff

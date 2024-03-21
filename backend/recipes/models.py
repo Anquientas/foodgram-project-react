@@ -7,29 +7,17 @@ from .validators import (
     validate_color,
     validate_slug
 )
+from backend.settings import (
+    MAX_LENGTH_COLOR,
+    MAX_LENGTH_NAME_INGREDIENT,
+    MAX_LENGTH_MEASUREMENT_UNIT,
+    MAX_LENGTH_NAME_RECIPE,
+    MAX_LENGTH_NAME_TAG,
+    MAX_LENGTH_SLUG
+)
 
 
 User = get_user_model()
-
-
-MAX_LENGTH_NAME_RECIPE = 200
-
-MAX_LENGTH_NAME_TAG = 200
-MAX_LENGTH_COLOR = 7
-MAX_LENGTH_SLUG = 200
-
-MAX_LENGTH_NAME_INGREDIENT = 200
-MAX_LENGTH_MEASUREMENT_UNIT = 200
-
-INGREDIENT_IN_RECIPE_IS_NOT_UNIQUE = (
-    'Ингредиенты в рецепте не могут повторятся!'
-)
-RECIPE_IN_SHOPPING_CART_IS_NOT_UNIQUE = (
-    'Рецепты в списке покупок не могут повторятся!'
-)
-RECIPE_IN_FAVORITE_IS_NOT_UNIQUE = (
-    'Рецепты в списке избранных не могут повторятся!'
-)
 
 
 class Tag(models.Model):

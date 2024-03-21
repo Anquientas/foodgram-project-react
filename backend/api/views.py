@@ -43,20 +43,20 @@ from users.models import Subscribe
 User = get_user_model()
 
 
-PASSWORD_CHANGE_SUCСESSFULLY = 'Пароль пользователя {user} успешно изменен!'
-SUBSCRIBE_CREATE_SUCСESSFULLY = (
-    'Подписка пользователя {user} на пользователя {author} успешно создана!'
-)
 SUBSCRIBE_ERROR = 'Объект не найден!'
+SUBSCRIBE_ERROR_VALIDATION = (
+    'Ошибка валидации!\n'
+    'Данные, поступившие в POST-запросе не прошли валидацию!\n'
+    'Поступившие данные: {data}'
+)
 SUBSCRIBE_DELETE_SUCСESSFULLY = (
     'Подписка пользователя {user} на пользователя {author} успешно удалена!'
 )
 
+RECIPE_NOT_FOUND = 'Рецепт с id={id} не найден!'
+
 FAVORITE_ADD_ERROR = (
     'Рецепт {recipe} уже находится в избранных у пользователя {user}!'
-)
-FAVORITE_ADD_SUCCESSFULLY = (
-    'Рецепт {recipe} добавлен в избранные пользователя {user}!'
 )
 FAVORITE_DELETE_SUCCESSFULLY = (
     'Рецепт {recipe} удален из избранных пользователя {user}!'
@@ -64,12 +64,9 @@ FAVORITE_DELETE_SUCCESSFULLY = (
 FAVORITE_NOT_FOUND = (
     'Рецепт {recipe} не найден среди избранных пользователя {user}!'
 )
-FAVORITE_RECIPE_NOT_FOUND = 'Рецепт с id={id} не найден!'
+
 SHOPPING_CART_ADD_ERROR = (
     'Рецепт {recipe} уже находится в списке покупок пользователя {user}!'
-)
-SHOPPING_CART_ADD_SUCCESSFULLY = (
-    'Рецепт {recipe} добавлен в список покупок пользователя {user}!'
 )
 SHOPPING_CART_DELETE_SUCCESSFULLY = (
     'Рецепт {recipe} удален из списка покупок пользователя {user}!'
@@ -123,7 +120,7 @@ class CustomUserViewSet(UserViewSet):
                     status=status.HTTP_201_CREATED
                 )
             return Response(
-                SUBSCRIBE_ERROR,
+                SUBSCRIBE_ERROR_VALIDATION.format(data=request.data),
                 status=status.HTTP_400_BAD_REQUEST
             )
         if Subscribe.objects.filter(author=author, user=user).exists():
@@ -205,7 +202,7 @@ class RecipeViewSet(ModelViewSet):
         if request.method == 'POST':
             if not Recipe.objects.filter(id=self.kwargs.get('pk')).exists():
                 return Response(
-                    {'errors': FAVORITE_RECIPE_NOT_FOUND.format(
+                    {'errors': RECIPE_NOT_FOUND.format(
                         id=kwargs.get('pk')
                     )},
                     status=status.HTTP_400_BAD_REQUEST
@@ -257,7 +254,7 @@ class RecipeViewSet(ModelViewSet):
         if request.method == 'POST':
             if not Recipe.objects.filter(id=self.kwargs.get('pk')).exists():
                 return Response(
-                    {'errors': FAVORITE_RECIPE_NOT_FOUND.format(
+                    {'errors': RECIPE_NOT_FOUND.format(
                         id=kwargs.get('pk')
                     )},
                     status=status.HTTP_400_BAD_REQUEST
@@ -281,7 +278,7 @@ class RecipeViewSet(ModelViewSet):
         recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
         if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
             return Response(
-                {'errors': SHOPPING_CART_ADD_ERROR.format(
+                {'errors': SHOPPING_CART_NOT_FOUND.format(
                     recipe=recipe.name,
                     user=user.username
                 )},
