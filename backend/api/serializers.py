@@ -219,13 +219,11 @@ class RecipeReadSerializer(ModelSerializer):
         read_only_fields = ('__all__',)
 
     def get_is_favorited(self, recipe):
-        # user = self.context.get('request').user
         if not self.context.get('request').user.is_anonymous:
             return Favorite.objects.filter(recipe=recipe).exists()
         return False
 
     def get_is_in_shopping_cart(self, recipe):
-        # user = self.context.get('request').user
         if not self.context.get('request').user.is_anonymous:
             return ShoppingCart.objects.filter(recipe=recipe).exists()
         return False
@@ -358,13 +356,11 @@ class RecipeSerializer(ModelSerializer):
         return super().update(instance, validated_data)
 
     def get_is_favorited(self, recipe):
-        # user = self.context.get('request').user
         if not self.context.get('request').user.is_anonymous:
             return Favorite.objects.filter(recipe=recipe).exists()
         return False
 
     def get_is_in_shopping_cart(self, recipe):
-        # user = self.context.get('request').user
         if not self.context.get('request').user.is_anonymous:
             return ShoppingCart.objects.filter(recipe=recipe).exists()
         return False
