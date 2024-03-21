@@ -12,6 +12,10 @@ USERNAME_NOT_ME = f'Использовать никнейм {USER_ENDPOINT_SUFFI
 
 
 def validate_username(username):
+    """
+    Функция валидирования поля никнейма
+    кастомной модели пользователя (User).
+    """
     if username == USER_ENDPOINT_SUFFIX:
         raise ValidationError(
             {'username': USERNAME_NOT_ME},

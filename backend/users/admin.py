@@ -8,6 +8,7 @@ from .models import (
 
 class UserAdmin(admin.ModelAdmin):
     """Админ-зона для пользователей."""
+
     list_display = (
         'id',
         'username',
@@ -39,11 +40,13 @@ class UserAdmin(admin.ModelAdmin):
 
 class SubscribeAdmin(admin.ModelAdmin):
     """Админ-зона для подписок."""
+
     list_display = ('author', 'user')
     list_filter = ('author', 'user')
     search_fields = ('author', 'user')
 
 
 admin.site.empty_value_display = 'Не задано'
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Subscribe, SubscribeAdmin)

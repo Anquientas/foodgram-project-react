@@ -64,7 +64,7 @@ class Tag(models.Model):
             f'Название: {self.name[:20]}, '
             f'id: {self.pk}, '
             f'цвет: {self.color}, '
-            f'слаг: {self.slug[:20]}, '
+            f'слаг: {self.slug[:20]}.'
         )
 
 
@@ -85,13 +85,13 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        ordering = ('name',)
+        ordering = ('id',)
 
     def __str__(self):
         return (
             f'Название: {self.name[:20]}, '
             f'id: {self.pk}, '
-            f'единица измерения: {self.measurement_unit[:20]}, '
+            f'единица измерения: {self.measurement_unit[:20]}.'
         )
 
 
@@ -139,12 +139,13 @@ class Recipe(models.Model):
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
         ordering = ('name',)
+        default_related_name = 'recipe'
 
     def __str__(self):
         return (
             f'Название: {self.name[:20]}, '
             f'id: {self.pk}, '
-            f'время приготовления: {self.cooking_time}, '
+            f'время приготовления: {self.cooking_time}.'
         )
 
 
@@ -186,9 +187,9 @@ class IngredientRecipe(models.Model):
 
     def __str__(self):
         return (
-            f'Рецепт: {self.recipe}, '
-            f'ингредиент: {self.ingredient}, '
-            f'количество: {self.amount}'
+            f'Рецепт: {self.recipe.name[:20]}, '
+            f'ингредиент: {self.ingredient.name[:20]}, '
+            f'количество: {self.amount}.'
         )
 
 
@@ -225,8 +226,9 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return (
-            f'Рецепт: {self.recipe}, в списке покупок '
-            f'пользователя {self.user}.'
+            f'Рецепт {self.recipe.name[:20]} (id: {self.recipe.id}) '
+            'в списке покупок пользователя '
+            f'{self.user.username[:20]} (id: {self.user.id}).'
         )
 
 
@@ -263,6 +265,7 @@ class Favorite(models.Model):
 
     def __str__(self):
         return (
-            f'Рецепт: {self.recipe}, в списке избранных '
-            f'пользователя {self.user}.'
+            f'Рецепт {self.recipe.name[:20]} (id: {self.recipe.id}) '
+            'в списке избранных пользователя '
+            f'{self.user.username[:20]} (id: {self.user.id}).'
         )

@@ -36,13 +36,11 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        blank=True,
         max_length=MAX_LENGTH_FIRSTNAME,
         help_text='Введите свое имя'
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        blank=True,
         max_length=MAX_LENGTH_LASTNAME,
         help_text='Введите свою фамилию'
     )
@@ -52,6 +50,9 @@ class User(AbstractUser):
         help_text='Введите пароль'
     )
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
+
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
@@ -60,8 +61,8 @@ class User(AbstractUser):
     def __str__(self):
         return (
             f'Никнейм: {self.username[:20]}, '
-            f'e-mail: {self.email}, '
-            f'id: {self.pk}, '
+            f'e-mail: {self.email[:20]}, '
+            f'id: {self.pk}.'
         )
 
 
@@ -98,10 +99,11 @@ class Subscribe(models.Model):
             models.CheckConstraint(
                 check=~models.Q(user=models.F('author')),
                 name='check_user_is_author',
-            ),
+            )
         ]
 
     def __str__(self):
         return (
-            f'Пользователь {self.user} подписан на {self.author}.'
+            f'Пользователь {self.user.username} (id: {self.user.id}) '
+            f'подписан на {self.author.username} (id: {self.author.id}).'
         )

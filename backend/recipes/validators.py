@@ -7,7 +7,6 @@ MINIMUM_NUMBER_IN_AMOUNT = (
     'Количество ингредиентов должно быть не менее 1 единицы измерения! '
     'Текущее значение "{amount}" недопустимо.'
 )
-
 MINIMUM_TIME_IN_COOKING_TIME = (
     'Время приготовления должно быть не менее 1 мин! '
     'Текущее значение "{time}" недопустимо.'
@@ -29,6 +28,10 @@ ZERO_SYMBOL_IN_COLOR = (
 
 
 def validate_amount(amount):
+    """
+    Функция валидирования поля количества ингредиента
+    модели ингредиента в рецепте (IngredientRecipe).
+    """
     if amount < 1:
         raise ValidationError(
             {'amount': MINIMUM_NUMBER_IN_AMOUNT.format(
@@ -39,6 +42,10 @@ def validate_amount(amount):
 
 
 def validate_cooking_time(cooking_time):
+    """
+    Функция валидирования поля времени приготовления
+    модели рецепта (Recipe).
+    """
     if cooking_time < 1:
         raise ValidationError(
             {'cooking_time': MINIMUM_TIME_IN_COOKING_TIME.format(
@@ -49,6 +56,7 @@ def validate_cooking_time(cooking_time):
 
 
 def validate_slug(slug):
+    """Функция валидирования поля слага модели тега (Tag)."""
     banned_symbols = re.sub(r'[-a-zA-Z0-9_]+$', '', slug)
     if banned_symbols:
         raise ValidationError(
@@ -61,6 +69,7 @@ def validate_slug(slug):
 
 
 def validate_color(color):
+    """Функция валидирования поля цвета модели тега (Tag)."""
     message = ''
     banned_symbols = re.sub(r'[a-fA-F\d]+$\b', '', color[1:])
     if banned_symbols:
