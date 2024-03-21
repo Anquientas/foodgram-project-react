@@ -1,7 +1,7 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 
-from .models import IngredientRecipe
+from recipes.models import IngredientRecipe
 
 
 DOWNLOAD_FILENAME = 'shopping_list.txt'

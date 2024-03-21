@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -12,7 +13,7 @@ from rest_framework.serializers import (
 )
 
 from .fields import Base64ImageField
-from .models import (
+from recipes.models import (
     Recipe,
     Tag,
     Ingredient,
@@ -21,7 +22,9 @@ from .models import (
     ShoppingCart
 )
 from users.models import Subscribe
-from users.serializers import CustomUserSerializer
+
+
+User = get_user_model()
 
 
 INGREDIENTS_NEED = 'Необходимо добавить хотя бы один ингредиент!'
@@ -42,6 +45,114 @@ IS_SUBSCRIBED_IS_FALSE = (
 IS_SUBSCRIBED_FOR_NO_AUTHOR = (
     'Пользователь {user} не может подписываться на самого себя!'
 )
+
+
+class CustomUserSerializer(ModelSerializer):
+    """Сериализатор для модели пользователя."""
+
+    is_subscribed = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'is_subscribed'
+        )
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def get_is_subscribed(self, author):
+        user = self.context.get('request').user
+        if not user.is_anonymous:
+            return Subscribe.objects.filter(user=user, author=author).exists()
+        return False
+
+
+class SubscribeSerializer(ModelSerializer):
+    """Сериализатор для модели подписки."""
+
+    email = ReadOnlyField(source='author.email')
+    id = ReadOnlyField(source='author.id')
+    username = ReadOnlyField(source='author.username')
+    first_name = ReadOnlyField(source='author.first_name')
+    last_name = ReadOnlyField(source='author.last_name')
+    is_subscribed = SerializerMethodField()
+    recipes = SerializerMethodField()
+    recipes_count = SerializerMethodField()
+
+    class Meta:
+        model = Subscribe
+        fields = (
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count'
+        )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if not user.is_anonymous:
+            return Subscribe.objects.filter(
+                author=obj.author,
+                user=user
+            ).exists()
+        return False
+
+    def get_recipes(self, obj):
+        # Что есть obj? subscribe
+        request = self.context.get('request')
+        recipes = Recipe.objects.filter(author=obj.author)
+        limit = request.GET.get('recipes_limit')
+        if limit and limit.isdigit():
+            recipes = recipes[:int(limit)]
+        return RecipeSubscribeSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
+
+    def validate(self, data):
+        request = self.context.get('request')
+        author = self.context.get('author')
+        user = request.user
+        if Subscribe.objects.filter(author=author, user=user).exists():
+            raise ValidationError(
+                detail=IS_SUBSCRIBED_IS_TRUE.format(
+                    user=user.username,
+                    author=author.username
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if (
+            request.method == 'DEL'
+            and not Subscribe.objects.filter(
+                author=author.username,
+                user=user.username
+            ).exists()
+        ):
+            raise ValidationError(
+                detail=IS_SUBSCRIBED_IS_FALSE.format(
+                    user=user.username,
+                    author=author.username
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if user == author:
+            raise ValidationError(
+                detail=IS_SUBSCRIBED_FOR_NO_AUTHOR.format(
+                    user=user.username
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
 
 
 class TagSerializer(ModelSerializer):
@@ -286,85 +397,3 @@ class RecipeSubscribeSerializer(ModelSerializer):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = ('__all__',)
-
-
-class SubscribeSerializer(ModelSerializer):
-    """Сериализатор для модели подписки."""
-
-    email = ReadOnlyField(source='author.email')
-    id = ReadOnlyField(source='author.id')
-    username = ReadOnlyField(source='author.username')
-    first_name = ReadOnlyField(source='author.first_name')
-    last_name = ReadOnlyField(source='author.last_name')
-    is_subscribed = SerializerMethodField()
-    recipes = SerializerMethodField()
-    recipes_count = SerializerMethodField()
-
-    class Meta:
-        model = Subscribe
-        fields = (
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-            'recipes',
-            'recipes_count'
-        )
-
-    def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if not user.is_anonymous:
-            return Subscribe.objects.filter(
-                author=obj.author,
-                user=user
-            ).exists()
-        return False
-
-    def get_recipes(self, obj):
-        # Что есть obj? subscribe
-        request = self.context.get('request')
-        recipes = Recipe.objects.filter(author=obj.author)
-        limit = request.GET.get('recipes_limit')
-        if limit and limit.isdigit():
-            recipes = recipes[:int(limit)]
-        return RecipeSubscribeSerializer(recipes, many=True).data
-
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj.author).count()
-
-    def validate(self, data):
-        request = self.context.get('request')
-        author = self.context.get('author')
-        user = request.user
-        if Subscribe.objects.filter(author=author, user=user).exists():
-            raise ValidationError(
-                detail=IS_SUBSCRIBED_IS_TRUE.format(
-                    user=user.username,
-                    author=author.username
-                ),
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if (
-            request.method == 'DEL'
-            and not Subscribe.objects.filter(
-                author=author.username,
-                user=user.username
-            ).exists()
-        ):
-            raise ValidationError(
-                detail=IS_SUBSCRIBED_IS_FALSE.format(
-                    user=user.username,
-                    author=author.username
-                ),
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if user == author:
-            raise ValidationError(
-                detail=IS_SUBSCRIBED_FOR_NO_AUTHOR.format(
-                    user=user.username
-                ),
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        return data

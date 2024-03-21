@@ -5,7 +5,7 @@ from django_filters.rest_framework.filters import (
     NumberFilter
 )
 
-from .models import Recipe, Tag
+from recipes.models import Recipe, Tag
 
 
 User = get_user_model()
