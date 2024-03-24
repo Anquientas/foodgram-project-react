@@ -103,10 +103,10 @@ def validate_color(color):
         elif message and not indicator_two_errors:
             message = (
                 '1) ' + message + '\n\n2) ' + LENGTH_IN_COLOR.format(
-                        color=color,
-                        number=len(color)
-                    )
+                    color=color,
+                    number=len(color)
                 )
+            )
         else:
             message = LENGTH_IN_COLOR.format(
                 color=color,
