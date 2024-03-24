@@ -1,7 +1,6 @@
 # Foodgram
 
-![Status workflow.](https://github.com/Anquientas/
-foodgram-project-react/actions/workflows/main.yml/badge.svg)
+![Status workflow.](https://github.com/Anquientas/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
 Проект представляет собой сайт, на котором пользователи публикуют рецепты, добавляют чужие рецепты в избранное и подписываются на публикации других авторов.
 
@@ -28,28 +27,40 @@ Python, Django, Django REST Framework, PostgreSQL, Docker, JavaScript.React
 
 - склонировать репозиторий проекта:
 
-```https://github.com/Anquientas/foodgram-project-react.git```
+```
+https://github.com/Anquientas/foodgram-project-react.git
+```
 
 - установить на сервере Docker и Docker Compose:
     + установить утилиту для скачивания файлов:
 
-    ```sudo apt install curl```
+    ```
+    sudo apt install curl
+    ```
 
     + скачать скрипт для установки:
     
-    ```curl -fsSL https://get.docker.com -o get-docker.sh```
+    ```
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    ```
 
     + запустить скрипт установки:
 
-    ```sh get-docker.sh```
+    ```
+    sh get-docker.sh
+    ```
 
     + установить Docker Compose:
         
-    ```sudo apt-get install docker-compose-plugin```
+    ```
+    sudo apt-get install docker-compose-plugin
+    ```
 
 - скопировать на сервер из папки *infra* файл ```docker-compose.production.yml``` (команду необходимо выполнять из папки *infra*):
 
-```scp docker-compose.yml nginx.conf username@IP:/home/username/```
+```
+scp docker-compose.yml nginx.conf username@IP:/home/username/
+```
 
 где:
 1. username - имя пользователя на сервере;
@@ -78,23 +89,33 @@ Python, Django, Django REST Framework, PostgreSQL, Docker, JavaScript.React
     
         * скачать Docker-образы и создать необходимые Docker-контейнеры и volumes:
         
-        ```sudo docker compose -f docker-compose.production.yml up -d```
+        ```
+        sudo docker compose -f docker-compose.production.yml up -d
+        ```
 
         * собрать статику (статические файлы) для Django-админки:
         
-        ```sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput```
+        ```
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+        ```
 
         * выполнить миграции:
         
-        ```sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate```
+        ```
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+        ```
 
-        * загрузить данные по заготовленным тегами и ингредиентам:
+        * загрузить в базу данных (БД) заготовленные данные по тегами и ингредиентам:
         
-        ```sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_data```
+        ```
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_data
+        ```
 
     + создать суперпользователя (необходимо заполнить все запрашиваемые данные в диалоге в консоли):
     
-    ```sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser```
+    ```
+    sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+    ```
 
 ### После каждого обновления репозитория (push в ветку master) будет происходить:
 
@@ -108,21 +129,29 @@ Python, Django, Django REST Framework, PostgreSQL, Docker, JavaScript.React
     
 - для проекта:
 
-```http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/```
+```
+http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/
+```
 
 - для админ-зоны:
 
-```http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/admin/```
+```
+http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/admin/
+```
 
 - для просмотра документации к API:
 
-```http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/api/docs/```
+```
+http://<ваше доменное имя или внешний IP-адрес удаленного сервера>/api/docs/
+```
 
 ## Как запустить проект локально
 
 - склонировать репозиторий проекта:
 
-```https://github.com/Anquientas/foodgram-project-react.git```
+```
+https://github.com/Anquientas/foodgram-project-react.git
+```
 
 - установить Docker и Docker Compose (см. подраздел "**Как запустить проект на удаленном сервере**" для **Linux**. Для **Windows** достаточно установить программу ***Docker Desktop***)
 
@@ -134,15 +163,21 @@ Python, Django, Django REST Framework, PostgreSQL, Docker, JavaScript.React
     
 - для проекта:
 
-```http://localhost/```
+```
+http://localhost/
+```
 
 - для админ-зоны:
 
-```http://localhost/admin/```
+```
+http://localhost/admin/
+```
 
 - для просмотра документации к API:
 
-```http://localhost/api/docs/```
+```
+http://localhost/api/docs/
+```
 
 
 ## Параметры .env
@@ -181,4 +216,3 @@ Python, Django, Django REST Framework, PostgreSQL, Docker, JavaScript.React
 Владимир Матасов ([GitHub](https://github.com/Anquientas/)) - разработка backend, API и deploy
 
 Команда YandexPraktikum - разработка frontend и ревью
-
