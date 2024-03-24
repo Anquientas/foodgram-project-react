@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    image: anquientas/foodram_backend
+    image: anquientas/foodgram_backend
     env_file: ../.env
     depends_on:
       - db
@@ -20,11 +20,11 @@ services:
       - static_volume:/app/backend_static
       - media_volume:/app/media
   frontend:
-    image: anquientas/foodram_frontend
+    image: anquientas/foodgram_frontend
     volumes:
       - ../frontend/:/app/result_build/
   nginx:
-    image: anquientas/foodram_gateway
+    image: anquientas/foodgram_gateway
     depends_on:
       - backend
       - frontend
