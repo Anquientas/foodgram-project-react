@@ -1,9 +1,9 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsAuthorOrAdminOrReadOnly(BasePermission):
+class IsAuthorOrAdminOrReadOnlyPermission(BasePermission):
     """
-    Класс, определяющий правада доуступа следующим образом:
+    Класс, определяющий правада доступа следующим образом:
     - просмотр - доступно всем;
     - остальные методы - доступно автору объекта или администратору.
     """
@@ -18,9 +18,9 @@ class IsAuthorOrAdminOrReadOnly(BasePermission):
         return obj.author == request.user or request.user.is_staff
 
 
-class IsCurrentUserOrAdminOrReadOnly(BasePermission):
+class IsCurrentUserOrAdminOrReadOnlyPermission(BasePermission):
     """
-    Класс, определяющий правада доуступа следующим образом:
+    Класс, определяющий правада доступа следующим образом:
     - просмотр - доступно всем;
     - остальные методы - доступно авторизованному пользователю
                          или администратору.

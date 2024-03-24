@@ -3,7 +3,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    SAFE_METHODS
+)
 from rest_framework.response import Response
 from rest_framework.viewsets import (
     ModelViewSet,
@@ -16,8 +20,8 @@ from djoser.views import UserViewSet
 from .filters import RecipeFilter
 from .paginations import ApiPagination
 from .permissions import (
-    IsAuthorOrAdminOrReadOnly,
-    IsCurrentUserOrAdminOrReadOnly
+    IsAuthorOrAdminOrReadOnlyPermission,
+    IsCurrentUserOrAdminOrReadOnlyPermission
 )
 from .serializers import (
     CustomUserSerializer,
@@ -49,17 +53,11 @@ SUBSCRIBE_ERROR_VALIDATION = (
     'Данные, поступившие в POST-запросе не прошли валидацию!\n'
     'Поступившие данные: {data}'
 )
-SUBSCRIBE_DELETE_SUCСESSFULLY = (
-    'Подписка пользователя {user} на пользователя {author} успешно удалена!'
-)
 
 RECIPE_NOT_FOUND = 'Рецепт с id={id} не найден!'
 
 FAVORITE_ADD_ERROR = (
     'Рецепт {recipe} уже находится в избранных у пользователя {user}!'
-)
-FAVORITE_DELETE_SUCCESSFULLY = (
-    'Рецепт {recipe} удален из избранных пользователя {user}!'
 )
 FAVORITE_NOT_FOUND = (
     'Рецепт {recipe} не найден среди избранных пользователя {user}!'
@@ -67,9 +65,6 @@ FAVORITE_NOT_FOUND = (
 
 SHOPPING_CART_ADD_ERROR = (
     'Рецепт {recipe} уже находится в списке покупок пользователя {user}!'
-)
-SHOPPING_CART_DELETE_SUCCESSFULLY = (
-    'Рецепт {recipe} удален из списка покупок пользователя {user}!'
 )
 SHOPPING_CART_NOT_FOUND = (
     'Рецепт {recipe} не найден списках покупок пользователя {user}!'
@@ -81,7 +76,7 @@ SHOPPING_CART_NONE = (
 
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    permission_classes = (IsCurrentUserOrAdminOrReadOnly,)
+    permission_classes = (IsCurrentUserOrAdminOrReadOnlyPermission,)
     serializer_class = UserSerializer
     pagination_class = ApiPagination
 
@@ -170,7 +165,7 @@ class RecipeViewSet(ModelViewSet):
     """Вьюсет для модели рецепта."""
 
     queryset = Recipe.objects.all()
-    permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    permission_classes = (IsAuthorOrAdminOrReadOnlyPermission,)
     http_method_names = ('get', 'head', 'options', 'patch', 'post', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
