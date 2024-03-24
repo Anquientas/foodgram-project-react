@@ -1,0 +1,8 @@
+from rest_framework.pagination import PageNumberPagination
+
+
+class ApiPagination(PageNumberPagination):
+    """Класс кастомной пагинации."""
+
+    page_size_query_param = 'limit'
+    page_size = 6
