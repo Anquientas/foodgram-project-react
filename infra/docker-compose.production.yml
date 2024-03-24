@@ -25,11 +25,12 @@ services:
       - ../frontend/:/app/result_build/
   nginx:
     image: anquientas/foodgram_gateway
+    env_file: .env
     depends_on:
       - backend
       - frontend
     ports:
-      - 9001:80
+      - 80:80
     volumes:
       - media_volume:/usr/share/nginx/html/media
       - static_volume:/usr/share/nginx/html/backend_static
