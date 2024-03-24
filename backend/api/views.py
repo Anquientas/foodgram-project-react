@@ -125,13 +125,7 @@ class CustomUserViewSet(UserViewSet):
             )
         if Subscribe.objects.filter(author=author, user=user).exists():
             Subscribe.objects.get(author=author).delete()
-            return Response(
-                SUBSCRIBE_DELETE_SUCСESSFULLY.format(
-                    user=user.username,
-                    author=author.username
-                ),
-                status=status.HTTP_204_NO_CONTENT
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             SUBSCRIBE_ERROR,
             status=status.HTTP_400_BAD_REQUEST
@@ -232,13 +226,8 @@ class RecipeViewSet(ModelViewSet):
                 )},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(
-            FAVORITE_DELETE_SUCCESSFULLY.format(
-                recipe=recipe.name,
-                user=user.username
-            ),
-            status=status.HTTP_204_NO_CONTENT
-        )
+        Favorite.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -284,13 +273,8 @@ class RecipeViewSet(ModelViewSet):
                 )},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(
-            SHOPPING_CART_DELETE_SUCCESSFULLY.format(
-                recipe=recipe.name,
-                user=user.username
-            ),
-            status=status.HTTP_204_NO_CONTENT
-        )
+        ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
