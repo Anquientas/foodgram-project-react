@@ -31,7 +31,6 @@ services:
       - frontend
     ports:
       - 8000:80
-      # - 80:80
     volumes:
       - media_volume:/usr/share/nginx/html/media
       - static_volume:/usr/share/nginx/html/backend_static

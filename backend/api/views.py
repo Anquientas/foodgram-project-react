@@ -187,23 +187,42 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с избранными рецептами у текущего пользователя.
         """
+        user = request.user
         if request.method == 'POST':
-            self.add_pecipe_to_user(
-                self,
-                request,
-                Favorite,
-                FavoriteSerializer,
-                *args,
-                **kwargs
+            if not Recipe.objects.filter(id=self.kwargs.get('pk')).exists():
+                return Response(
+                    {'errors': RECIPE_NOT_FOUND.format(
+                        id=kwargs.get('pk')
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
+            if Favorite.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': FAVORITE_ADD_ERROR.format(
+                        recipe=recipe.name,
+                        user=user.username
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = FavoriteSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user, recipe=recipe)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+        recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
+        if not Favorite.objects.filter(user=user, recipe=recipe).exists():
+            return Response(
+                {'errors': FAVORITE_NOT_FOUND.format(
+                    recipe=recipe.name,
+                    user=user.username
+                )},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        else:
-            self.delete_recipe_from_user(
-                self,
-                request,
-                Favorite,
-                *args,
-                **kwargs
-            )
+        Favorite.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -215,71 +234,33 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с рецептами в списке покупок у текущего пользователя.
         """
+        user = request.user
         if request.method == 'POST':
-            self.add_pecipe_to_user(
-                self,
-                request,
-                ShoppingCart,
-                ShoppingCartSerializer,
-                *args,
-                **kwargs
-            )
-        else:
-            self.delete_recipe_from_user(
-                self,
-                request,
-                ShoppingCart,
-                *args,
-                **kwargs
-            )
-
-    def add_pecipe_to_user(self,
-                           request,
-                           model,
-                           serializer,
-                           *args,
-                           **kwargs):
-        """
-        Функция добавления записи в промежуточную таблицу
-        для переданной модели.
-        """
-        user = request.user
-        if not model.objects.filter(id=self.kwargs.get('pk')).exists():
-            return Response(
-                {'errors': RECIPE_NOT_FOUND.format(
-                    id=kwargs.get('pk')
-                )},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            if not Recipe.objects.filter(id=self.kwargs.get('pk')).exists():
+                return Response(
+                    {'errors': RECIPE_NOT_FOUND.format(
+                        id=kwargs.get('pk')
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
+            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
+                return Response(
+                    {'errors': SHOPPING_CART_ADD_ERROR.format(
+                        recipe=recipe.name,
+                        user=user.username
+                    )},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            serializer = ShoppingCartSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user, recipe=recipe)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
         recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
-        if model.objects.filter(user=user, recipe=recipe).exists():
-            return Response(
-                {'errors': FAVORITE_ADD_ERROR.format(
-                    recipe=recipe.name,
-                    user=user.username
-                )},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        serializer = serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=user, recipe=recipe)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-
-    def delete_recipe_from_user(self,
-                                request,
-                                model,
-                                *args,
-                                **kwargs):
-        """
-        Функция удаления записи из промежуточной таблицы
-        для переданной модели.
-        """
-        user = request.user
-        recipe = get_object_or_404(Recipe, id=self.kwargs.get('pk'))
-        if not model.objects.filter(user=user, recipe=recipe).exists():
+        if not ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
             return Response(
                 {'errors': SHOPPING_CART_NOT_FOUND.format(
                     recipe=recipe.name,
@@ -287,7 +268,7 @@ class RecipeViewSet(ModelViewSet):
                 )},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        model.objects.filter(user=user, recipe=recipe).delete()
+        ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -299,7 +280,7 @@ class RecipeViewSet(ModelViewSet):
         """Функция скачивания списка покупок."""
         user = User.objects.get(id=request.user.pk)
         if user.shopping_cart.exists():
-            return shopping_cart_ingredients(self, request)
+            return shopping_cart_ingredients(self, request, user)
         return Response(
             SHOPPING_CART_NONE.format(
                 user=user.username
