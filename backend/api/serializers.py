@@ -248,15 +248,15 @@ class RecipeReadSerializer(RecipeReadSerializerBase):
     class Meta(RecipeReadSerializerBase.Meta):
         read_only_fields = ('__all__',)
 
-    def get_is_favorited(self, recipe):
-        if not self.context.get('request').user.is_anonymous:
-            return Favorite.objects.filter(recipe=recipe).exists()
-        return False
+    # def get_is_favorited(self, recipe):
+    #     if not self.context.get('request').user.is_anonymous:
+    #         return Favorite.objects.filter(recipe=recipe).exists()
+    #     return False
 
-    def get_is_in_shopping_cart(self, recipe):
-        if not self.context.get('request').user.is_anonymous:
-            return ShoppingCart.objects.filter(recipe=recipe).exists()
-        return False
+    # def get_is_in_shopping_cart(self, recipe):
+    #     if not self.context.get('request').user.is_anonymous:
+    #         return ShoppingCart.objects.filter(recipe=recipe).exists()
+    #     return False
 
 
 class RecipeSerializer(RecipeReadSerializerBase):
