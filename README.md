@@ -224,3 +224,7 @@ http://localhost/api/docs/
 Владимир Матасов ([GitHub](https://github.com/Anquientas/)) - разработка backend, API и deploy
 
 Команда YandexPraktikum - разработка frontend и ревью
+
+### Данные суперпользователя для проверки проекта:
+email - email@faike.py
+password - qwe123qaz
