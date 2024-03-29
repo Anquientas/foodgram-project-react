@@ -1,40 +1,47 @@
 from django.db.models import Sum
-from django.http import HttpResponse
 
-from recipes.models import IngredientRecipe
-
-
-DOWNLOAD_FILENAME = 'shopping_list.txt'
+from recipes.models import IngredientRecipe, Recipe
 
 
-def shopping_cart_ingredients(self, request):
+def shopping_cart_ingredients(user):
     """
-    Функция скачивания списка продуктов
+    Функция скачивания списка покупки продуктов
     для выбранных рецептов пользователя.
     """
     sum_ingredients_in_recipes = IngredientRecipe.objects.filter(
-        recipe__shopping_cart__user=request.user
+        recipe__shopping_carts__user=user
     ).values(
         'ingredient__name',
         'ingredient__measurement_unit'
     ).annotate(
         amounts=Sum('amount', distinct=True)).order_by('amounts')
 
-    shopping_list = (
-        'Список игредиентов к покупке для приготолвения выбранных рецептов:\n'
+    recipes_in_shopping_carts = Recipe.objects.filter(
+        shopping_carts__user=user
+    ).values_list(
+        'name',
+        flat=True
     )
-    for ingredient in sum_ingredients_in_recipes:
-        shopping_list += (
-            f'\t- {ingredient["ingredient__name"].capitalize()}: '
-            f'{ingredient["amounts"]} '
-            f'{ingredient["ingredient__measurement_unit"]};\n'
-        )
 
-    response = HttpResponse(
-        shopping_list,
-        content_type='text/plain'
-    )
-    response['Content-Disposition'] = (
-        f'attachment; filename={DOWNLOAD_FILENAME}'
-    )
-    return response
+    ingredients = []
+    numerate = 1
+    for ingredient in sum_ingredients_in_recipes:
+        ingredients.append(
+            f'\t{numerate}) {ingredient["ingredient__name"].capitalize()}: '
+            f'{ingredient["amounts"]} '
+            f'{ingredient["ingredient__measurement_unit"]}\n'
+        )
+        numerate += 1
+
+    recipes = []
+    numerate = 1
+    for recipe in recipes_in_shopping_carts:
+        recipes.append(f'\t{numerate}) {recipe}\n')
+        numerate += 1
+
+    return ''.join([
+        'Список продуктов к покупке:\n',
+        *map(str, ingredients),
+        '\n\nПродукты необходимы для приготовления следующих рецептов:\n',
+        *map(str, recipes)
+    ])

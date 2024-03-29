@@ -1,120 +1,32 @@
 import re
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
-MINIMUM_NUMBER_IN_AMOUNT = (
-    'Количество ингредиентов должно быть не менее 1 единицы измерения! '
-    'Текущее значение "{amount}" недопустимо.'
+BANNED_SYNBOL_IN_USERNAME = (
+    'Никнейм "{username}" содержит неразрешенные символы:\n{symbols}'
 )
-MINIMUM_TIME_IN_COOKING_TIME = (
-    'Время приготовления должно быть не менее 1 мин! '
-    'Текущее значение "{time}" недопустимо.'
-)
-BANNED_SYMBOL_IN_COLOR = (
-    'Цвет в HEX-формате "{color}" содержит недопустимые символы:\n{symbols}'
-)
-BANNED_SYMBOL_IN_SLUG = (
-    'Слаг "{slug}" содержит неразрешенные символы:\n{symbols}'
-)
-LENGTH_IN_COLOR = (
-    'Неверная длина строки цвета в HEX-формате "{color}"!\n'
-    'Должно быть 4 или 7 символов, в строке {number} символов.'
-)
-ZERO_SYMBOL_IN_COLOR = (
-    'Неверный формат строки цвета "{color}"!\n'
-    'Должен быть HEX-формат, т.е. начинаться с "#", а не с {symbol}.'
+USERNAME_NOT_ENDPOINT_SUFFIX = (
+    f'Использовать никнейм {settings.USER_ENDPOINT_SUFFIX} запрещено!'
 )
 
 
-def validate_amount(amount):
+def validate_username(username):
     """
-    Функция валидирования поля количества ингредиента
-    модели ингредиента в рецепте (IngredientRecipe).
+    Функция валидирования поля никнейма
+    кастомной модели пользователя (User).
     """
-    if amount < 1:
+    if username == settings.USER_ENDPOINT_SUFFIX:
         raise ValidationError(
-            {'amount': MINIMUM_NUMBER_IN_AMOUNT.format(
-                amount=amount
-            )},
+            {'username': USERNAME_NOT_ENDPOINT_SUFFIX},
         )
-    return amount
-
-
-def validate_cooking_time(cooking_time):
-    """
-    Функция валидирования поля времени приготовления
-    модели рецепта (Recipe).
-    """
-    if cooking_time < 1:
-        raise ValidationError(
-            {'cooking_time': MINIMUM_TIME_IN_COOKING_TIME.format(
-                time=cooking_time
-            )},
-        )
-    return cooking_time
-
-
-def validate_slug(slug):
-    """Функция валидирования поля слага модели тега (Tag)."""
-    banned_symbols = re.sub(r'[-a-zA-Z0-9_]+$', '', slug)
+    banned_symbols = re.sub(r'[\w.@+-]', '', username)
     if banned_symbols:
         raise ValidationError(
-            {'slug': BANNED_SYMBOL_IN_SLUG.format(
-                slug=slug,
+            {'username': BANNED_SYNBOL_IN_USERNAME.format(
+                username=username,
                 symbols=''.join(set(banned_symbols))
             )},
         )
-    return slug
-
-
-def validate_color(color):
-    """Функция валидирования поля цвета модели тега (Tag)."""
-    message = ''
-    banned_symbols = re.sub(r'[a-fA-F\d]+$\b', '', color[1:])
-    if banned_symbols:
-        message = BANNED_SYMBOL_IN_COLOR.format(
-            color=color,
-            symbols=''.join(set(banned_symbols))
-        )
-
-    indicator_two_errors = False
-    if color[0] != '#':
-        if message:
-            message = (
-                '1) ' + message + '\n\n2) ' + ZERO_SYMBOL_IN_COLOR.format(
-                    color=color,
-                    symbol=color[0]
-                )
-            )
-            indicator_two_errors = True
-        else:
-            message = ZERO_SYMBOL_IN_COLOR.format(
-                color=color,
-                symbol=color[0]
-            )
-
-    if len(color) != 7 and len(color) != 4:
-        if message and indicator_two_errors:
-            message += '\n\n3) ' + LENGTH_IN_COLOR.format(
-                color=color,
-                number=len(color)
-            )
-        elif message and not indicator_two_errors:
-            message = (
-                '1) ' + message + '\n\n2) ' + LENGTH_IN_COLOR.format(
-                    color=color,
-                    number=len(color)
-                )
-            )
-        else:
-            message = LENGTH_IN_COLOR.format(
-                color=color,
-                number=len(color)
-            )
-
-    if message:
-        raise ValidationError(
-            {'slug': message},
-        )
-    return color
+    return username

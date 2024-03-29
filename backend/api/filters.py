@@ -20,10 +20,10 @@ class RecipeFilter(FilterSet):
         to_field_name='slug',
     )
     is_favorited = NumberFilter(
-        method='filter_is_favorited',
+        method='is_favorited_get',
     )
     is_in_shopping_cart = NumberFilter(
-        method='filter_is_in_shopping_cart',
+        method='is_in_shopping_cart_get',
     )
 
     class Meta:
@@ -35,12 +35,12 @@ class RecipeFilter(FilterSet):
             'tags__slug'
         )
 
-    def filter_is_favorited(self, queryset, name, value):
+    def is_favorited_get(self, recipes, name, value):
         if self.request.user.is_authenticated and value:
-            return queryset.filter(favorite__user=self.request.user)
-        return queryset
+            return recipes.filter(favorites__user=self.request.user)
+        return recipes
 
-    def filter_is_in_shopping_cart(self, queryset, name, value):
+    def is_in_shopping_cart_get(self, recipes, name, value):
         if self.request.user.is_authenticated and value:
-            return queryset.filter(shopping_cart__user=self.request.user)
-        return queryset
+            return recipes.filter(shopping_carts__user=self.request.user)
+        return recipes

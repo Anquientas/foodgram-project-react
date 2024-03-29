@@ -2,6 +2,7 @@ asgiref==3.7.2
 certifi==2024.2.2
 cffi==1.16.0
 charset-normalizer==3.3.2
+colorama==0.4.6
 cryptography==42.0.5
 defusedxml==0.8.0rc2
 Django==3.2.16
@@ -10,6 +11,8 @@ django-templated-mail==1.1.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
 djoser==2.2.2
+drf-extra-fields==3.7.0
+filetype==1.2.0
 flake8==7.0.0
 idna==3.6
 mccabe==0.7.0

@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'django_filters',
     'djoser',
     'api.apps.ApiConfig',
-    'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
 ]
 
@@ -147,7 +146,7 @@ DJOSER = {
 
 # User model
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'recipes.User'
 
 
 # Constats

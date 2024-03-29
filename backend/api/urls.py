@@ -2,20 +2,20 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
 from .views import (
-    CustomUserViewSet,
+    UserViewSet,
     IngredientViewSet,
     RecipeViewSet,
     TagViewSet
 )
 
 
-router_v1 = SimpleRouter()
-router_v1.register('ingredients', IngredientViewSet, basename='ingredients')
-router_v1.register('recipes', RecipeViewSet, basename='recipes')
-router_v1.register('tags', TagViewSet, basename='tags')
-router_v1.register('users', CustomUserViewSet, basename='users')
+router = SimpleRouter()
+router.register('ingredients', IngredientViewSet, basename='ingredients')
+router.register('recipes', RecipeViewSet, basename='recipes')
+router.register('tags', TagViewSet, basename='tags')
+router.register('users', UserViewSet, basename='users')
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
+    path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
 ]

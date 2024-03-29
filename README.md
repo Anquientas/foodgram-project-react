@@ -117,10 +117,14 @@ https://github.com/Anquientas/foodgram-project-react.git
         sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
         ```
 
-        * загрузить в базу данных (БД) заготовленные данные по тегами и ингредиентам:
+        * загрузить в базу данных (БД) заготовленные данные по тегами и продуктами:
         
         ```
-        sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_data
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py loaddata data/tags.json
+        ```
+
+        ```
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py loaddata data/ingredients.json
         ```
 
     + создать суперпользователя (необходимо заполнить все запрашиваемые данные в диалоге в консоли):
@@ -176,19 +180,19 @@ https://github.com/Anquientas/foodgram-project-react.git
 - для проекта:
 
 ```
-http://localhost/
+http://localhost:8000/
 ```
 
 - для админки проекта:
 
 ```
-http://localhost/admin/
+http://localhost:8000/admin/
 ```
 
 - для просмотра документации API:
 
 ```
-http://localhost/api/docs/
+http://localhost:8000/api/docs/
 ```
 
 ## Параметры .env
