@@ -20,7 +20,7 @@ from djoser.serializers import SetPasswordSerializer
 from djoser.serializers import UserCreateSerializer as UserCreateSerializerBase
 from djoser.views import UserViewSet as UserViewSetBase
 
-from .filters import RecipeFilter
+from .filters import RecipeFilter, IngredientFilter
 from .paginations import ApiPagination
 from .permissions import IsAuthorOrAdminOrReadOnlyPermission
 from .serializers import (
@@ -151,7 +151,7 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name',)
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(ModelViewSet):

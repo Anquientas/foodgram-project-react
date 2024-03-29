@@ -1,14 +1,28 @@
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import FilterSet
 from django_filters.rest_framework.filters import (
+    CharFilter,
     ModelMultipleChoiceFilter,
     NumberFilter
 )
 
-from recipes.models import Recipe, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
 
 User = get_user_model()
+
+
+class IngredientFilter(FilterSet):
+    """Класс фильтра для названия продуктов."""
+
+    name = CharFilter(
+        field_name='name',
+        lookup_expr='istartswith'
+    )
+
+    class Meta:
+        model = Ingredient
+        fields = ('name',)
 
 
 class RecipeFilter(FilterSet):
