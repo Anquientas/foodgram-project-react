@@ -75,7 +75,7 @@ class Subscribe(models.Model):
     author = models.ForeignKey(
         User,
         verbose_name='Подписка на автора рецепта',
-        related_name='signedes',
+        related_name='authors',
         on_delete=models.CASCADE,
         help_text='Подписаться на автора рецепта'
     )
@@ -88,8 +88,8 @@ class Subscribe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Мои подписки'
-        verbose_name_plural = 'Мои подписки'
+        verbose_name = 'Подписки'
+        verbose_name_plural = 'Подписки'
         ordering = ('author',)
         constraints = [
             models.UniqueConstraint(
@@ -190,9 +190,9 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        verbose_name='Продукт',
+        verbose_name='Продукты',
         through='IngredientRecipe',
-        help_text='Введите продукт'
+        help_text='Введите продукты'
     )
     tags = models.ManyToManyField(
         Tag,
@@ -239,14 +239,12 @@ class IngredientRecipe(models.Model):
         Recipe,
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
-        related_name='ingredients_recipes',
         help_text='Выберите рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         verbose_name='Продукт',
         on_delete=models.CASCADE,
-        related_name='ingredients_recipes',
         help_text='Введите продукт'
     )
     amount = models.PositiveSmallIntegerField(
@@ -256,14 +254,15 @@ class IngredientRecipe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиенты рецепта'
-        verbose_name_plural = 'Ингридиенты рецептов'
+        verbose_name = 'Продукты рецепта'
+        verbose_name_plural = 'Продукты рецептов'
         constraints = [
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
                 name='unique_recipe_ingredient',
             )
         ]
+        default_related_name = 'ingredients_recipes'
 
     def __str__(self):
         return (
@@ -273,7 +272,7 @@ class IngredientRecipe(models.Model):
         )
 
 
-class CatalogBase(models.Model):
+class CatalogSelectedRecipesBase(models.Model):
     """
     Базовый класс для списков избранного и покупок пользователя.
     Для одного пользователя рецепты в списках не могут повторятся.
@@ -294,9 +293,15 @@ class CatalogBase(models.Model):
 
     class Meta:
         abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_recipe_in_catalog_for_user',
+            )
+        ]
 
 
-class ShoppingCart(CatalogBase):
+class ShoppingCart(CatalogSelectedRecipesBase):
     """
     Список покупок пользователя.
     Для одного пользователя рецепты в списке покупок не могут повторятся.
@@ -305,13 +310,7 @@ class ShoppingCart(CatalogBase):
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_recipe_in_shopping_cart_for_user',
-            )
-        ]
-        default_related_name = "shopping_carts"
+        default_related_name = 'shopping_carts'
 
     def __str__(self):
         return (
@@ -321,7 +320,7 @@ class ShoppingCart(CatalogBase):
         )
 
 
-class Favorite(CatalogBase):
+class Favorite(CatalogSelectedRecipesBase):
     """
     Список избранных рецептов пользователя.
     Для одного пользователя рецепты в списке покупок не могут повторятся.
@@ -330,13 +329,7 @@ class Favorite(CatalogBase):
     class Meta:
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_recipe_in_favorite_for_user',
-            )
-        ]
-        default_related_name = "favorites"
+        default_related_name = 'favorites'
 
     def __str__(self):
         return (

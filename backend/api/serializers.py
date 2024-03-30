@@ -57,11 +57,7 @@ class UserSerializer(UserSerializerBase):
     class Meta:
         model = User
         fields = (
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
+            *UserSerializerBase.Meta.fields,
             'is_subscribed'
         )
 
@@ -75,7 +71,7 @@ class UserSerializer(UserSerializerBase):
         )
 
 
-class SubscribeSerializer(UserSerializer):
+class SubscribeReadSerializer(UserSerializer):
     """Сериализатор для чтения подписки."""
 
     recipes = SerializerMethodField()
@@ -85,7 +81,8 @@ class SubscribeSerializer(UserSerializer):
     )
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + (
+        fields = (
+            *UserSerializer.Meta.fields,
             'recipes',
             'recipes_count'
         )
@@ -93,17 +90,17 @@ class SubscribeSerializer(UserSerializer):
 
     def get_recipes(self, user):
         request = self.context.get('request')
-        recipes = user.recipes.all()
         limit = int(request.GET.get('recipes_limit', 10**10))
         return RecipeSubscribeSerializer(
-            recipes[:limit],
+            user.recipes.all()[:limit],
             many=True,
             context={'request': request}
         ).data
 
 
-class SubscribeCreateSerializer(ModelSerializer):
-    """Сериализатор для создания подписки."""
+class SubscribeSerializer(ModelSerializer):
+    """Сериализатор для создания и удаления подписки."""
+
     class Meta:
         model = Subscribe
         fields = ('user', 'author')
@@ -111,7 +108,7 @@ class SubscribeCreateSerializer(ModelSerializer):
     def validate(self, data):
         request = self.context.get('request')
         author = data.get('author')
-        user = data.get('user')
+        user = request.user
         if user == author:
             raise ValidationError(
                 detail=IS_SUBSCRIBED_FOR_NO_AUTHOR.format(
@@ -139,9 +136,9 @@ class SubscribeCreateSerializer(ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        request = self.context.get('request')
-        return SubscribeSerializer(
-            instance.author, context={'request': request}
+        return SubscribeReadSerializer(
+            instance.get('user'),
+            context={'request': self.context.get('request')}
         ).data
 
 
@@ -258,29 +255,23 @@ class RecipeSerializer(RecipeSerializerBase):
 
     @staticmethod
     def add_ingredients(ingredients, model):
-        ingredients_instance = [
-            IngredientRecipe(
-                recipe=model,
-                ingredient=ingredient['id'],
-                amount=ingredient['amount']
-            )
-            for ingredient in ingredients
-        ]
         IngredientRecipe.objects.bulk_create(
-            ingredients_instance,
+            [
+                IngredientRecipe(
+                    recipe=model,
+                    ingredient=ingredient['id'],
+                    amount=ingredient['amount']
+                )
+                for ingredient in ingredients
+            ],
         )
 
     @staticmethod
     def check_duplicate(check_list, message, field):
-        elements_list = []
-        elements_list_duplicate = []
-        for element in check_list:
-            if element in elements_list:
-                if field == 'tags':
-                    elements_list_duplicate.append(element.name)
-                else:
-                    elements_list_duplicate.append(element.get('id').name)
-            elements_list.append(element)
+        elements_list_duplicate = [
+            (element.name if field == 'tags' else element.get('id').name)
+            for element in check_list if check_list.count(element) > 1
+        ]
         if elements_list_duplicate:
             raise ValidationError(
                 {field: message.format(
@@ -326,7 +317,7 @@ class RecipeSerializer(RecipeSerializerBase):
     def to_representation(self, instance):
         return RecipeReadSerializer(
             instance,
-            context={'request': self.context.get('request')}
+            context=self.context
         ).data
 
     def create(self, validated_data):
@@ -360,7 +351,7 @@ class RecipeSubscribeSerializer(ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class CatalogBase(ModelSerializer):
+class CatalogSelectedRecipesBase(ModelSerializer):
     """
     Базовый сериализатор
     для модели избранных рецептов пользователя (Favorite)
@@ -372,20 +363,20 @@ class CatalogBase(ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeSubscribeSerializer(
-            instance.recipe,
-            context={'request': self.context.get('request')}
+            instance,
+            context=self.context
         ).data
 
 
-class FavoriteSerializer(CatalogBase):
+class FavoriteSerializer(CatalogSelectedRecipesBase):
     """Сериализатор для модели избранных рецептов пользователя (Favorite)."""
 
-    class Meta(CatalogBase.Meta):
+    class Meta(CatalogSelectedRecipesBase.Meta):
         model = Favorite
 
 
-class ShoppingCartSerializer(CatalogBase):
+class ShoppingCartSerializer(CatalogSelectedRecipesBase):
     """Сериализатор для модели списка покупок пользователя (ShoppingCart)."""
 
-    class Meta(CatalogBase.Meta):
+    class Meta(CatalogSelectedRecipesBase.Meta):
         model = ShoppingCart

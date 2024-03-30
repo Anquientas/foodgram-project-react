@@ -16,13 +16,11 @@ from rest_framework.viewsets import (
     ReadOnlyModelViewSet
 )
 
-from djoser.serializers import SetPasswordSerializer
-from djoser.serializers import UserCreateSerializer as UserCreateSerializerBase
 from djoser.views import UserViewSet as UserViewSetBase
 
 from .filters import RecipeFilter, IngredientFilter
 from .paginations import ApiPagination
-from .permissions import IsAuthorOrAdminOrReadOnlyPermission
+from .permissions import IsAuthorOrReadOnlyPermission
 from .serializers import (
     UserSerializer,
     IngredientSerializer,
@@ -30,8 +28,8 @@ from .serializers import (
     RecipeSerializer,
     RecipeReadSerializer,
     ShoppingCartSerializer,
+    SubscribeReadSerializer,
     SubscribeSerializer,
-    SubscribeCreateSerializer,
     TagSerializer
 )
 from .utils import shopping_cart_ingredients
@@ -71,21 +69,14 @@ DOWNLOAD_FILENAME = 'shopping_list.txt'
 
 class UserViewSet(UserViewSetBase):
     queryset = User.objects.all()
-    permission_classes = (IsAuthorOrAdminOrReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnlyPermission,)
     serializer_class = UserSerializer
     pagination_class = ApiPagination
 
     def get_permissions(self):
         if self.request.method == 'GET' and self.action == 'me':
-            self.permission_classes = (IsAuthenticated,)
-        return super(UserViewSetBase, self).get_permissions()
-
-    def get_serializer_class(self):
-        if self.request.method == 'POST' and self.action == 'create':
-            self.serializer_class = UserCreateSerializerBase
-        elif self.request.method == 'POST' and self.action == 'set_password':
-            self.serializer_class = SetPasswordSerializer
-        return super(UserViewSetBase, self).get_serializer_class()
+            return (IsAuthenticated(),)
+        return super().get_permissions()
 
     @action(
         detail=True,
@@ -97,25 +88,16 @@ class UserViewSet(UserViewSetBase):
         user = request.user
         author = get_object_or_404(User, id=self.kwargs.get('id'))
         if request.method == 'POST':
-            serializer = SubscribeCreateSerializer(
+            serializer = SubscribeSerializer(
                 data={'user': user.id, 'author': author.id},
-                context={'request': request}
+                context={'request': request},
             )
             serializer.is_valid(raise_exception=True)
-            if serializer.is_valid():
-                serializer.save(author=author, user=user)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
+            Subscribe.objects.create(author=author, user=user)
             return Response(
-                SUBSCRIBE_ERROR_VALIDATION,
-                status=status.HTTP_400_BAD_REQUEST
+                serializer.data,
+                status=status.HTTP_201_CREATED
             )
-        serializer = SubscribeCreateSerializer(
-            data={'user': user.id, 'author': author.id},
-            context={'request': request}
-        )
         get_object_or_404(Subscribe, author=author, user=user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -128,7 +110,7 @@ class UserViewSet(UserViewSetBase):
         """Функция получения подписок пользователя."""
         subscribes = User.objects.filter(signers__user=request.user)
         pages = self.paginate_queryset(subscribes)
-        serializer = SubscribeSerializer(
+        serializer = SubscribeReadSerializer(
             pages,
             many=True,
             context={'request': request}
@@ -159,7 +141,7 @@ class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
     permission_classes = (
-        IsAuthorOrAdminOrReadOnlyPermission,
+        IsAuthorOrReadOnlyPermission,
         IsAuthenticatedOrReadOnly
     )
     http_method_names = ('get', 'head', 'options', 'patch', 'post', 'delete')
@@ -221,17 +203,24 @@ class RecipeViewSet(ModelViewSet):
                 kwargs.get('pk')
             )
 
-    def add_pecipe_to_user(self,
-                           model,
-                           serializer,
-                           user,
-                           id_recipe):
+    @staticmethod
+    def add_pecipe_to_user(model, serializer, user, id_recipe):
         """
         Функция добавления записи в промежуточную таблицу
         для переданной модели.
         """
         recipe = get_object_or_404(Recipe, id=id_recipe)
-        if model.objects.filter(user=user, recipe=recipe).exists():
+        obj_model, created = model.objects.get_or_create(
+            user=user,
+            recipe=recipe
+        )
+        if created:
+            serializer = serializer(recipe)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        else:
             return Response(
                 {'errors': ADD_ERROR.format(
                     recipe=recipe.name,
@@ -239,18 +228,9 @@ class RecipeViewSet(ModelViewSet):
                 )},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = serializer(data={'recipe': id_recipe})
-        if serializer.is_valid(raise_exception=True):
-            serializer.save(user=user, recipe=recipe)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
 
-    def delete_recipe_from_user(self,
-                                model,
-                                user,
-                                id_recipe):
+    @staticmethod
+    def delete_recipe_from_user(model, user, id_recipe):
         """
         Функция удаления записи из промежуточной таблицы
         для переданной модели.
@@ -268,14 +248,12 @@ class RecipeViewSet(ModelViewSet):
         """Функция скачивания списка покупок."""
         user = User.objects.get(id=request.user.pk)
         if user.shopping_carts.exists():
-            text = shopping_cart_ingredients(request.user)
-            response = FileResponse(
-                text,
+            return FileResponse(
+                shopping_cart_ingredients(request.user),
                 as_attachment=True,
                 filename=f'{DOWNLOAD_FILENAME}'
             )
-            return response
-        return Response(
+        raise Response(
             SHOPPING_CART_NONE.format(
                 user=user.username
             ),

@@ -8,7 +8,7 @@ BANNED_SYNBOL_IN_USERNAME = (
     'Никнейм "{username}" содержит неразрешенные символы:\n{symbols}'
 )
 USERNAME_NOT_ENDPOINT_SUFFIX = (
-    f'Использовать никнейм {settings.USER_ENDPOINT_SUFFIX} запрещено!'
+    f'Использовать никнейм {settings.CURRENT_USER_ENDPOINT} запрещено!'
 )
 
 
@@ -17,7 +17,7 @@ def validate_username(username):
     Функция валидирования поля никнейма
     кастомной модели пользователя (User).
     """
-    if username == settings.USER_ENDPOINT_SUFFIX:
+    if username == settings.CURRENT_USER_ENDPOINT:
         raise ValidationError(
             {'username': USERNAME_NOT_ENDPOINT_SUFFIX},
         )

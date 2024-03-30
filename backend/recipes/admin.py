@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as UserAdminBase
-from colorama import Style
+from django.utils.safestring import mark_safe
+
+from .filters import CookingTimeFilter
 
 from .models import (
     Ingredient,
@@ -25,17 +27,14 @@ class UserAdmin(UserAdminBase):
         'id',
         'username',
         'email',
-        'password',
         'first_name',
         'last_name',
         'recipes_count',
         'signers_count',
-        'signedes_count'
+        'authors_count'
     )
     list_editable = (
         'username',
-        'email',
-        'password',
         'first_name',
         'last_name'
     )
@@ -45,14 +44,17 @@ class UserAdmin(UserAdminBase):
         'first_name',
         'last_name'
     )
-    list_filter = ('email',)
+    list_filter = ('signers',)
 
+    @admin.display(description='recipes')
     def recipes_count(self, user):
         return user.recipes.count()
 
-    def signedes_count(self, user):
-        return user.signedes.count()
+    @admin.display(description='authors')
+    def authors_count(self, user):
+        return user.authors.count()
 
+    @admin.display(description='signers')
     def signers_count(self, user):
         return user.signers.count()
 
@@ -70,21 +72,19 @@ class SubscribeAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     """Админ-зона для тегов."""
 
-    list_display = ('id', 'name', 'slug', 'colored_color')
-    list_editable = ('slug',)
-    search_fields = ('name', 'slug')
-    list_filter = ('slug',)
+    list_display = ('id', 'name', 'slug', 'color', 'color_display')
+    list_editable = ('name', 'color')
+    search_fields = ('name',)
+    list_filter = ('name',)
 
-    @staticmethod
-    def rgb_to_ansi(r, g, b):
-        return f"\x1B[38;2;{r};{g};{b}m"
-
-    def colored_color(self, tag):
-        rgb_color = tuple(
-            int(tag.color.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4)
+    @admin.display(description='color')
+    def color_display(self, tag):
+        return mark_safe(
+            '<div style="background-color: {}; '
+            'width: 15px; height: 15px"></div>'.format(
+                tag.color
+            )
         )
-        return self.rgb_to_ansi(*rgb_color) + tag.color + Style.RESET_ALL
-    colored_color.short_description = 'color'
 
 
 @admin.register(Ingredient)
@@ -92,9 +92,12 @@ class IngredientAdmin(admin.ModelAdmin):
     """Админ-зона для игредиентов."""
 
     list_display = ('id', 'name', 'measurement_unit')
-    list_editable = ('measurement_unit',)
     search_fields = ('name', 'measurement_unit')
-    list_filter = ('name',)
+    list_filter = ('measurement_unit',)
+
+
+class IngredientInline(admin.TabularInline):
+    model = IngredientRecipe
 
 
 @admin.register(Recipe)
@@ -108,27 +111,40 @@ class RecipeAdmin(admin.ModelAdmin):
         'cooking_time',
         'display_tags',
         'display_ingredients',
-        'image',
+        'image_display',
         'count_favorites'
     )
     search_fields = ('name', 'tags')
-    list_filter = ('cooking_time',)
+    list_filter = ('author', 'tags', CookingTimeFilter)
     filter_horizontal = ('ingredients', 'tags')
     list_display_links = ('id',)
+    inlines = [
+        IngredientInline,
+    ]
 
+    @admin.display(description='tags')
     def display_tags(self, recipe):
-        return ", ".join([tag.name for tag in recipe.tags.all()])
+        return mark_safe("".join(
+            f'<span style="display: block;">{tag.name}</span>'
+            for tag in recipe.tags.all()
+        ))
 
+    @admin.display(description='ingredients')
     def display_ingredients(self, recipe):
-        return ", ".join([
-            ingredient.name for ingredient in recipe.ingredients.all()
-        ])
-
-    def cooking_time(self, recipe):
-        return recipe.cooking_time
+        return mark_safe("".join(
+            '<span style="display: block;">'
+            f'{ingredient.name[:20]} '
+            f'{recipe.ingredients_recipes.get(ingredient=ingredient).amount} '
+            f'{ingredient.measurement_unit}</span>'
+            for ingredient in recipe.ingredients.all()
+        ))
 
     def count_favorites(self, recipe):
         return recipe.favorites.count()
+
+    @admin.display(description='image')
+    def image_display(self, recipe):
+        return mark_safe(f'<img src="{recipe.image.url}" height="50" />')
 
 
 @admin.register(IngredientRecipe)
