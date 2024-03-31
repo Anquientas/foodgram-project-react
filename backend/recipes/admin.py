@@ -4,7 +4,6 @@ from django.contrib.auth.admin import UserAdmin as UserAdminBase
 from django.utils.safestring import mark_safe
 
 from .filters import CookingTimeFilter
-
 from .models import (
     Ingredient,
     IngredientRecipe,
@@ -34,7 +33,6 @@ class UserAdmin(UserAdminBase):
         'authors_count'
     )
     list_editable = (
-        'username',
         'first_name',
         'last_name'
     )
@@ -46,15 +44,15 @@ class UserAdmin(UserAdminBase):
     )
     list_filter = ('signers',)
 
-    @admin.display(description='recipes')
+    @admin.display(description='Рецепты')
     def recipes_count(self, user):
         return user.recipes.count()
 
-    @admin.display(description='authors')
+    @admin.display(description='Подписки')
     def authors_count(self, user):
         return user.authors.count()
 
-    @admin.display(description='signers')
+    @admin.display(description='Подписчики')
     def signers_count(self, user):
         return user.signers.count()
 
@@ -77,7 +75,7 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_filter = ('name',)
 
-    @admin.display(description='color')
+    @admin.display(description='Цвет')
     def color_display(self, tag):
         return mark_safe(
             '<div style="background-color: {}; '
@@ -118,31 +116,30 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'tags', CookingTimeFilter)
     filter_horizontal = ('ingredients', 'tags')
     list_display_links = ('id',)
-    inlines = [
-        IngredientInline,
-    ]
+    inlines = [IngredientInline,]
 
-    @admin.display(description='tags')
+    @admin.display(description='Теги')
     def display_tags(self, recipe):
-        return mark_safe("".join(
-            f'<span style="display: block;">{tag.name}</span>'
-            for tag in recipe.tags.all()
-        ))
+        return mark_safe('<br>'.join(tag.name for tag in recipe.tags.all()))
 
-    @admin.display(description='ingredients')
+    @admin.display(description='Ингредиенты')
     def display_ingredients(self, recipe):
-        return mark_safe("".join(
-            '<span style="display: block;">'
-            f'{ingredient.name[:20]} '
-            f'{recipe.ingredients_recipes.get(ingredient=ingredient).amount} '
-            f'{ingredient.measurement_unit}</span>'
-            for ingredient in recipe.ingredients.all()
+        return mark_safe('<br>'.join(
+            f'{ingredient[0][:20]} '
+            f'{ingredient[1]} '
+            f'{ingredient[2]}'
+            for ingredient in recipe.ingredients_recipes.values_list(
+                'ingredient__name',
+                'amount',
+                'ingredient__measurement_unit'
+            )
         ))
 
+    @admin.display(description='Сколько добавили в избранное')
     def count_favorites(self, recipe):
-        return recipe.favorites.count()
+        return recipe.favorite.count()
 
-    @admin.display(description='image')
+    @admin.display(description='Изображение')
     def image_display(self, recipe):
         return mark_safe(f'<img src="{recipe.image.url}" height="50" />')
 

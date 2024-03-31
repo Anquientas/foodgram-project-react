@@ -173,6 +173,32 @@ https://github.com/Anquientas/foodgram-project-react.git
 
 - создать и заполнить файл ```.env``` параметрами, указанными в файле ```.env.example``` (см. подраздел "**Параметры .env**"), расположенном в корневой директории проекта;
 
+- в папке *infra* в файле ```docker-compose.production.yml``` поменять запись 
+
+```
+  nginx:
+    image: <ник на Docker Hub>/foodgram_gateway
+    env_file: ../.env
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - 8000:80
+```
+
+на 
+
+```
+  nginx:
+    image: <ник на Docker Hub>/foodgram_gateway
+    env_file: ../.env
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - 80:80
+```
+
 - выполнить из папки *infra* команды, перечиленные для деплоя в случае невозможности автоматического деплоя (см. подраздел "**Как запустить проект на удаленном сервере**")
 
 ### После развертывания для работы в проекте предусмотрены следующие адреса:

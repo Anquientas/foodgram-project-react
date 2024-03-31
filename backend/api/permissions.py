@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsAuthorOrReadOnlyPermission(BasePermission):
+class IsAuthorOrReadOnly(BasePermission):
     """
     Класс, определяющий правада доступа следующим образом:
     - просмотр - доступно всем;

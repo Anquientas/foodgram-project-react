@@ -1,9 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from django.contrib.auth import get_user_model
+from djoser.views import UserViewSet as UserViewSetBase
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
@@ -16,21 +18,20 @@ from rest_framework.viewsets import (
     ReadOnlyModelViewSet
 )
 
-from djoser.views import UserViewSet as UserViewSetBase
-
+from .exceptions import BadRequestException
 from .filters import RecipeFilter, IngredientFilter
 from .paginations import ApiPagination
-from .permissions import IsAuthorOrReadOnlyPermission
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (
-    UserSerializer,
-    IngredientSerializer,
     FavoriteSerializer,
+    IngredientSerializer,
     RecipeSerializer,
     RecipeReadSerializer,
     ShoppingCartSerializer,
-    SubscribeReadSerializer,
     SubscribeSerializer,
-    TagSerializer
+    SubscribeReadSerializer,
+    TagSerializer,
+    UserSerializer
 )
 from .utils import shopping_cart_ingredients
 from recipes.models import (
@@ -69,7 +70,7 @@ DOWNLOAD_FILENAME = 'shopping_list.txt'
 
 class UserViewSet(UserViewSetBase):
     queryset = User.objects.all()
-    permission_classes = (IsAuthorOrReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnly,)
     serializer_class = UserSerializer
     pagination_class = ApiPagination
 
@@ -141,7 +142,7 @@ class RecipeViewSet(ModelViewSet):
 
     queryset = Recipe.objects.all()
     permission_classes = (
-        IsAuthorOrReadOnlyPermission,
+        IsAuthorOrReadOnly,
         IsAuthenticatedOrReadOnly
     )
     http_method_names = ('get', 'head', 'options', 'patch', 'post', 'delete')
@@ -204,13 +205,13 @@ class RecipeViewSet(ModelViewSet):
             )
 
     @staticmethod
-    def add_pecipe_to_user(model, serializer, user, id_recipe):
+    def add_pecipe_to_user(model, serializer, user, recipe):
         """
         Функция добавления записи в промежуточную таблицу
         для переданной модели.
         """
-        recipe = get_object_or_404(Recipe, id=id_recipe)
-        obj_model, created = model.objects.get_or_create(
+        recipe = get_object_or_404(Recipe, id=recipe)
+        _, created = model.objects.get_or_create(
             user=user,
             recipe=recipe
         )
@@ -220,14 +221,12 @@ class RecipeViewSet(ModelViewSet):
                 serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        else:
-            return Response(
-                {'errors': ADD_ERROR.format(
-                    recipe=recipe.name,
-                    user=user.username
-                )},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        raise BadRequestException(
+            detail={'errors': ADD_ERROR.format(
+                recipe=recipe.name,
+                user=user.username
+            )}
+        )
 
     @staticmethod
     def delete_recipe_from_user(model, user, id_recipe):
@@ -247,15 +246,14 @@ class RecipeViewSet(ModelViewSet):
     def download_shopping_cart(self, request, *args, **kwargs):
         """Функция скачивания списка покупок."""
         user = User.objects.get(id=request.user.pk)
-        if user.shopping_carts.exists():
+        if user.shoppingcart.exists():
             return FileResponse(
                 shopping_cart_ingredients(request.user),
                 as_attachment=True,
                 filename=f'{DOWNLOAD_FILENAME}'
             )
-        raise Response(
-            SHOPPING_CART_NONE.format(
+        raise NotFound(
+            detail=SHOPPING_CART_NONE.format(
                 user=user.username
             ),
-            status=status.HTTP_404_NOT_FOUND
         )

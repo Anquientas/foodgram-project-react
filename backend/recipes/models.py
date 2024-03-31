@@ -1,7 +1,7 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, RegexValidator
+from django.db import models
 
 from .validators import validate_username
 
@@ -88,7 +88,7 @@ class Subscribe(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Подписки'
+        verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         ordering = ('author',)
         constraints = [
@@ -272,7 +272,7 @@ class IngredientRecipe(models.Model):
         )
 
 
-class CatalogSelectedRecipesBase(models.Model):
+class UserAndRecipeTableBase(models.Model):
     """
     Базовый класс для списков избранного и покупок пользователя.
     Для одного пользователя рецепты в списках не могут повторятся.
@@ -282,13 +282,15 @@ class CatalogSelectedRecipesBase(models.Model):
         User,
         verbose_name='Пользователь',
         on_delete=models.CASCADE,
-        help_text='Введите пользователя'
+        help_text='Введите пользователя',
+        related_name='%(class)s'
     )
     recipe = models.ForeignKey(
         Recipe,
         verbose_name='Рецепт',
         on_delete=models.CASCADE,
-        help_text='Введите рецепт'
+        help_text='Введите рецепт',
+        related_name='%(class)s'
     )
 
     class Meta:
@@ -296,12 +298,12 @@ class CatalogSelectedRecipesBase(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
-                name='unique_recipe_in_catalog_for_user',
+                name='unique_recipe_in_%(class)s_for_user',
             )
         ]
 
 
-class ShoppingCart(CatalogSelectedRecipesBase):
+class ShoppingCart(UserAndRecipeTableBase):
     """
     Список покупок пользователя.
     Для одного пользователя рецепты в списке покупок не могут повторятся.
@@ -310,7 +312,6 @@ class ShoppingCart(CatalogSelectedRecipesBase):
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        default_related_name = 'shopping_carts'
 
     def __str__(self):
         return (
@@ -320,7 +321,7 @@ class ShoppingCart(CatalogSelectedRecipesBase):
         )
 
 
-class Favorite(CatalogSelectedRecipesBase):
+class Favorite(UserAndRecipeTableBase):
     """
     Список избранных рецептов пользователя.
     Для одного пользователя рецепты в списке покупок не могут повторятся.
@@ -329,7 +330,6 @@ class Favorite(CatalogSelectedRecipesBase):
     class Meta:
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
-        default_related_name = 'favorites'
 
     def __str__(self):
         return (

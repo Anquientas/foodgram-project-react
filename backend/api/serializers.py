@@ -1,23 +1,22 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer as UserSerializerBase
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     CurrentUserDefault,
     IntegerField,
     ModelSerializer,
+    PrimaryKeyRelatedField,
     ReadOnlyField,
-    SerializerMethodField,
-    PrimaryKeyRelatedField
+    SerializerMethodField
 )
 
-from drf_extra_fields.fields import Base64ImageField
-from djoser.serializers import UserSerializer as UserSerializerBase
-
 from recipes.models import (
+    Favorite,
     Ingredient,
     IngredientRecipe,
-    Favorite,
     Recipe,
     ShoppingCart,
     Subscribe,
@@ -138,7 +137,7 @@ class SubscribeSerializer(ModelSerializer):
     def to_representation(self, instance):
         return SubscribeReadSerializer(
             instance.get('user'),
-            context={'request': self.context.get('request')}
+            context=self.context
         ).data
 
 
@@ -256,25 +255,22 @@ class RecipeSerializer(RecipeSerializerBase):
     @staticmethod
     def add_ingredients(ingredients, model):
         IngredientRecipe.objects.bulk_create(
-            [
-                IngredientRecipe(
-                    recipe=model,
-                    ingredient=ingredient['id'],
-                    amount=ingredient['amount']
-                )
-                for ingredient in ingredients
-            ],
+            [IngredientRecipe(
+                recipe=model,
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
+            ) for ingredient in ingredients],
         )
 
     @staticmethod
-    def check_duplicate(check_list, message, field):
+    def check_duplicate(check_list, message, key):
         elements_list_duplicate = [
-            (element.name if field == 'tags' else element.get('id').name)
+            (element.name if not key else element.get(key).name)
             for element in check_list if check_list.count(element) > 1
         ]
         if elements_list_duplicate:
             raise ValidationError(
-                {field: message.format(
+                {'field': message.format(
                     elements=set(elements_list_duplicate)
                 )}
             )
@@ -304,14 +300,14 @@ class RecipeSerializer(RecipeSerializerBase):
         ingredients = self.check_duplicate(
             ingredients,
             INGREDIENT_REPEAT,
-            'ingredients'
+            'id'
         )
         return ingredients
 
     def validate_tags(self, tags):
         if not tags:
             raise ValidationError({'tags': TAGS_NEED})
-        tags = self.check_duplicate(tags, TAG_REPEAT, 'tags')
+        tags = self.check_duplicate(tags, TAG_REPEAT, '')
         return tags
 
     def to_representation(self, instance):
@@ -351,7 +347,7 @@ class RecipeSubscribeSerializer(ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class CatalogSelectedRecipesBase(ModelSerializer):
+class FavoriteAndShoppingCartSerializerBase(ModelSerializer):
     """
     Базовый сериализатор
     для модели избранных рецептов пользователя (Favorite)
@@ -368,15 +364,15 @@ class CatalogSelectedRecipesBase(ModelSerializer):
         ).data
 
 
-class FavoriteSerializer(CatalogSelectedRecipesBase):
+class FavoriteSerializer(FavoriteAndShoppingCartSerializerBase):
     """Сериализатор для модели избранных рецептов пользователя (Favorite)."""
 
-    class Meta(CatalogSelectedRecipesBase.Meta):
+    class Meta(FavoriteAndShoppingCartSerializerBase.Meta):
         model = Favorite
 
 
-class ShoppingCartSerializer(CatalogSelectedRecipesBase):
+class ShoppingCartSerializer(FavoriteAndShoppingCartSerializerBase):
     """Сериализатор для модели списка покупок пользователя (ShoppingCart)."""
 
-    class Meta(CatalogSelectedRecipesBase.Meta):
+    class Meta(FavoriteAndShoppingCartSerializerBase.Meta):
         model = ShoppingCart
