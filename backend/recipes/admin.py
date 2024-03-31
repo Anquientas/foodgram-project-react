@@ -116,7 +116,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'tags', CookingTimeFilter)
     filter_horizontal = ('ingredients', 'tags')
     list_display_links = ('id',)
-    inlines = [IngredientInline,]
+    inlines = [IngredientInline, ]
 
     @admin.display(description='Теги')
     def display_tags(self, recipe):

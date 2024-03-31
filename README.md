@@ -177,7 +177,7 @@ https://github.com/Anquientas/foodgram-project-react.git
 
 ```
   nginx:
-    image: <ник на Docker Hub>/foodgram_gateway
+    image: anquientas/foodgram_gateway
     env_file: ../.env
     depends_on:
       - backend
@@ -190,7 +190,7 @@ https://github.com/Anquientas/foodgram-project-react.git
 
 ```
   nginx:
-    image: <ник на Docker Hub>/foodgram_gateway
+    image: anquientas/foodgram_gateway
     env_file: ../.env
     depends_on:
       - backend
@@ -254,7 +254,3 @@ http://localhost:8000/api/docs/
 Владимир Матасов ([GitHub](https://github.com/Anquientas/)) - разработка backend, API и deploy
 
 Команда YandexPraktikum - разработка frontend и ревью
-
-### Данные суперпользователя для проверки проекта:
-email - email@faike.py
-password - qwe123qaz
