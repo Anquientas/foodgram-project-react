@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as UserViewSetBase
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
@@ -18,7 +18,6 @@ from rest_framework.viewsets import (
     ReadOnlyModelViewSet
 )
 
-from .exceptions import BadRequestException
 from .filters import RecipeFilter, IngredientFilter
 from .paginations import ApiPagination
 from .permissions import IsAuthorOrReadOnly
@@ -87,7 +86,8 @@ class UserViewSet(UserViewSetBase):
     def subscribe(self, request, *args, **kwargs):
         """Функция создания и удаления подписки."""
         user = request.user
-        author = get_object_or_404(User, id=self.kwargs.get('id'))
+        id = self.kwargs.get('id')
+        author = get_object_or_404(User, pk=int(id))
         if request.method == 'POST':
             serializer = SubscribeSerializer(
                 data={'user': user.id, 'author': author.id},
@@ -109,7 +109,7 @@ class UserViewSet(UserViewSetBase):
     )
     def subscriptions(self, request):
         """Функция получения подписок пользователя."""
-        subscribes = User.objects.filter(signers__user=request.user)
+        subscribes = User.objects.filter(authors__user=request.user)
         pages = self.paginate_queryset(subscribes)
         serializer = SubscribeReadSerializer(
             pages,
@@ -156,6 +156,22 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeSerializer
 
+    def processing_requests(self, model, serializer, request, id):
+        """
+        Общая функция обработки запросов,
+        связанных с избранными рецептами и списком покупок
+        у текущего пользователя.
+        """
+        if request.method == 'POST':
+            return self.add_pecipe_to_user(
+                model,
+                serializer,
+                request.user,
+                id
+            )
+        else:
+            return self.delete_recipe_from_user(model, request.user, id)
+
     @action(
         detail=True,
         methods=('post', 'delete'),
@@ -166,19 +182,12 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с избранными рецептами у текущего пользователя.
         """
-        if request.method == 'POST':
-            return self.add_pecipe_to_user(
-                Favorite,
-                FavoriteSerializer,
-                request.user,
-                kwargs.get('pk')
-            )
-        else:
-            return self.delete_recipe_from_user(
-                Favorite,
-                request.user,
-                kwargs.get('pk')
-            )
+        return self.processing_requests(
+            Favorite,
+            FavoriteSerializer,
+            request,
+            kwargs.get('pk')
+        )
 
     @action(
         detail=True,
@@ -190,27 +199,20 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с рецептами в списке покупок у текущего пользователя.
         """
-        if request.method == 'POST':
-            return self.add_pecipe_to_user(
-                ShoppingCart,
-                ShoppingCartSerializer,
-                request.user,
-                kwargs.get('pk')
-            )
-        else:
-            return self.delete_recipe_from_user(
-                ShoppingCart,
-                request.user,
-                kwargs.get('pk')
-            )
+        return self.processing_requests(
+            ShoppingCart,
+            ShoppingCartSerializer,
+            request,
+            kwargs.get('pk')
+        )
 
     @staticmethod
-    def add_pecipe_to_user(model, serializer, user, recipe):
+    def add_pecipe_to_user(model, serializer, user, id):
         """
         Функция добавления записи в промежуточную таблицу
         для переданной модели.
         """
-        recipe = get_object_or_404(Recipe, id=recipe)
+        recipe = get_object_or_404(Recipe, id=id)
         _, created = model.objects.get_or_create(
             user=user,
             recipe=recipe
@@ -221,7 +223,7 @@ class RecipeViewSet(ModelViewSet):
                 serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        raise BadRequestException(
+        raise ValidationError(
             detail={'errors': ADD_ERROR.format(
                 recipe=recipe.name,
                 user=user.username
@@ -246,7 +248,7 @@ class RecipeViewSet(ModelViewSet):
     def download_shopping_cart(self, request, *args, **kwargs):
         """Функция скачивания списка покупок."""
         user = User.objects.get(id=request.user.pk)
-        if user.shoppingcart.exists():
+        if user.shoppingcarts.exists():
             return FileResponse(
                 shopping_cart_ingredients(request.user),
                 as_attachment=True,

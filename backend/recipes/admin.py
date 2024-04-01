@@ -78,10 +78,8 @@ class TagAdmin(admin.ModelAdmin):
     @admin.display(description='Цвет')
     def color_display(self, tag):
         return mark_safe(
-            '<div style="background-color: {}; '
-            'width: 15px; height: 15px"></div>'.format(
-                tag.color
-            )
+            f'<div style="background-color: {tag.color}; '
+            'width: 15px; height: 15px"></div>'
         )
 
 
@@ -116,28 +114,25 @@ class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('author', 'tags', CookingTimeFilter)
     filter_horizontal = ('ingredients', 'tags')
     list_display_links = ('id',)
-    inlines = [IngredientInline, ]
+    inlines = (IngredientInline,)
+    readonly_fields = ('image_display',)
 
     @admin.display(description='Теги')
     def display_tags(self, recipe):
         return mark_safe('<br>'.join(tag.name for tag in recipe.tags.all()))
 
-    @admin.display(description='Ингредиенты')
+    @admin.display(description='Продукты')
     def display_ingredients(self, recipe):
         return mark_safe('<br>'.join(
-            f'{ingredient[0][:20]} '
-            f'{ingredient[1]} '
-            f'{ingredient[2]}'
-            for ingredient in recipe.ingredients_recipes.values_list(
-                'ingredient__name',
-                'amount',
-                'ingredient__measurement_unit'
-            )
+            f'{ingredient.ingredient.name[:20]} '
+            f'{ingredient.amount} '
+            f'{ingredient.ingredient.measurement_unit}'
+            for ingredient in recipe.ingredients_recipes.all()
         ))
 
-    @admin.display(description='Сколько добавили в избранное')
+    @admin.display(description='В избранных')
     def count_favorites(self, recipe):
-        return recipe.favorite.count()
+        return recipe.favorites.count()
 
     @admin.display(description='Изображение')
     def image_display(self, recipe):
@@ -149,7 +144,7 @@ class IngredientRecipeAdmin(admin.ModelAdmin):
     """Админ-зона для продуктов рецептов."""
 
     list_display = ('recipe', 'ingredient', 'amount')
-    list_filter = ('recipe', 'ingredient')
+    list_filter = ('recipe',)
     search_fields = ('recipe', 'ingredient')
 
 

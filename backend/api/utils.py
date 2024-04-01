@@ -11,14 +11,14 @@ def shopping_cart_ingredients(user):
     для выбранных рецептов пользователя.
     """
     sum_ingredients_in_recipes = IngredientRecipe.objects.filter(
-        recipe__shoppingcart__user=user
+        recipe__shoppingcarts__user=user
     ).values(
         'ingredient__name',
         'ingredient__measurement_unit'
     ).annotate(
         amounts=Sum('amount', distinct=True)).order_by('amounts')
     recipes_in_shopping_carts = Recipe.objects.filter(
-        shoppingcart__user=user
+        shoppingcarts__user=user
     ).values_list(
         'name',
         flat=True

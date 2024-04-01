@@ -87,11 +87,11 @@ class SubscribeReadSerializer(UserSerializer):
         )
         read_only_fields = ('__all__',)
 
-    def get_recipes(self, user):
+    def get_recipes(self, author):
         request = self.context.get('request')
         limit = int(request.GET.get('recipes_limit', 10**10))
         return RecipeSubscribeSerializer(
-            user.recipes.all()[:limit],
+            author.recipes.all()[:limit],
             many=True,
             context={'request': request}
         ).data
@@ -136,7 +136,7 @@ class SubscribeSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         return SubscribeReadSerializer(
-            instance.get('user'),
+            instance.get('author'),
             context=self.context
         ).data
 
@@ -255,11 +255,11 @@ class RecipeSerializer(RecipeSerializerBase):
     @staticmethod
     def add_ingredients(ingredients, model):
         IngredientRecipe.objects.bulk_create(
-            [IngredientRecipe(
+            IngredientRecipe(
                 recipe=model,
                 ingredient=ingredient['id'],
                 amount=ingredient['amount']
-            ) for ingredient in ingredients],
+            ) for ingredient in ingredients
         )
 
     @staticmethod
