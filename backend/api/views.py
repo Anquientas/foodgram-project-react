@@ -156,21 +156,33 @@ class RecipeViewSet(ModelViewSet):
             return RecipeReadSerializer
         return RecipeSerializer
 
-    def processing_requests(self, model, serializer, request, id):
+    def add_or_delete_recipe_for_user(self, model, serializer, request, id):
         """
-        Общая функция обработки запросов,
-        связанных с избранными рецептами и списком покупок
-        у текущего пользователя.
+        Функция добавления записи в промежуточную таблицу или ее удаления,
+        связанной с избранными рецептами и списком покупок
+        для переданной модели текущего пользователя.
         """
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=id)
         if request.method == 'POST':
-            return self.add_pecipe_to_user(
-                model,
-                serializer,
-                request.user,
-                id
+            _, created = model.objects.get_or_create(
+                user=user,
+                recipe=recipe
             )
-        else:
-            return self.delete_recipe_from_user(model, request.user, id)
+            if created:
+                serializer = serializer(recipe)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            raise ValidationError(
+                detail={'errors': ADD_ERROR.format(
+                    recipe=recipe.name,
+                    user=user.username
+                )}
+            )
+        get_object_or_404(model, user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -182,7 +194,7 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с избранными рецептами у текущего пользователя.
         """
-        return self.processing_requests(
+        return self.add_or_delete_recipe_for_user(
             Favorite,
             FavoriteSerializer,
             request,
@@ -199,46 +211,12 @@ class RecipeViewSet(ModelViewSet):
         Функция обработки запросов,
         связанных с рецептами в списке покупок у текущего пользователя.
         """
-        return self.processing_requests(
+        return self.add_or_delete_recipe_for_user(
             ShoppingCart,
             ShoppingCartSerializer,
             request,
             kwargs.get('pk')
         )
-
-    @staticmethod
-    def add_pecipe_to_user(model, serializer, user, id):
-        """
-        Функция добавления записи в промежуточную таблицу
-        для переданной модели.
-        """
-        recipe = get_object_or_404(Recipe, id=id)
-        _, created = model.objects.get_or_create(
-            user=user,
-            recipe=recipe
-        )
-        if created:
-            serializer = serializer(recipe)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        raise ValidationError(
-            detail={'errors': ADD_ERROR.format(
-                recipe=recipe.name,
-                user=user.username
-            )}
-        )
-
-    @staticmethod
-    def delete_recipe_from_user(model, user, id_recipe):
-        """
-        Функция удаления записи из промежуточной таблицы
-        для переданной модели.
-        """
-        recipe = get_object_or_404(Recipe, id=id_recipe)
-        get_object_or_404(model, user=user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=False,
@@ -252,7 +230,7 @@ class RecipeViewSet(ModelViewSet):
             return FileResponse(
                 shopping_cart_ingredients(request.user),
                 as_attachment=True,
-                filename=f'{DOWNLOAD_FILENAME}'
+                filename=DOWNLOAD_FILENAME
             )
         raise NotFound(
             detail=SHOPPING_CART_NONE.format(

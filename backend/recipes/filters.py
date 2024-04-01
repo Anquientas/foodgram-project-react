@@ -1,7 +1,6 @@
 from ast import literal_eval
 
 from django.contrib import admin
-# from django.db.models import Min, Max
 
 from .models import Recipe
 
@@ -14,26 +13,21 @@ class CookingTimeFilter(admin.SimpleListFilter):
 
     @staticmethod
     def calculate_parameters():
-        times = set([recipe.cooking_time for recipe in Recipe.objects.all()])
+        times = set(recipe.cooking_time for recipe in Recipe.objects.all())
         bot, top = min(times), max(times)
-        if not bot:
-            return False, None
         if bot == top:
             return False, None
         time_min = int((top + 2 * bot) / 3)
         time_max = int((2 * top + bot) / 3)
-        return ([bot, time_min, time_max, top], [
-            Recipe.objects.filter(
-                cooking_time__lte=time_min
-            ).count(),
-            Recipe.objects.filter(
-                cooking_time__lte=time_max,
-                cooking_time__gt=time_min
-            ).count(),
-            Recipe.objects.filter(
-                cooking_time__gt=time_max
-            ).count()
-        ])
+        counts = [0, 0, 0]
+        for time in times:
+            if time < time_min:
+                counts[0] += 1
+            elif time < time_max:
+                counts[1] += 1
+            else:
+                counts[2] += 1
+        return ([0, time_min, time_max, 10 ** 10], counts)
 
     def lookups(self, request, model_admin):
         times, counts = self.calculate_parameters()
@@ -42,7 +36,7 @@ class CookingTimeFilter(admin.SimpleListFilter):
         return (
             (times[:2], f'Быстрые, менее {times[1]} мин ({counts[0]})'),
             (times[1:3], f'Средние, до {times[2]} мин ({counts[1]})'),
-            (times[2:], f'Долгие, более {times[2]} мин ({counts[2]})')
+            (times[2:], f'Долгие ({counts[2]})')
         )
 
     def queryset(self, request, recipes):

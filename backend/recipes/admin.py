@@ -85,7 +85,7 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    """Админ-зона для игредиентов."""
+    """Админ-зона для продуктов."""
 
     list_display = ('id', 'name', 'measurement_unit')
     search_fields = ('name', 'measurement_unit')
@@ -108,7 +108,8 @@ class RecipeAdmin(admin.ModelAdmin):
         'display_tags',
         'display_ingredients',
         'image_display',
-        'count_favorites'
+        'count_favorites',
+        'created_at_display'
     )
     search_fields = ('name', 'tags')
     list_filter = ('author', 'tags', CookingTimeFilter)
@@ -137,6 +138,10 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='Изображение')
     def image_display(self, recipe):
         return mark_safe(f'<img src="{recipe.image.url}" height="50" />')
+
+    @admin.display(description='Дата создания')
+    def created_at_display(self, obj):
+        return obj.created_at.strftime('%d %B %Y')
 
 
 @admin.register(IngredientRecipe)

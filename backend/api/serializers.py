@@ -134,9 +134,9 @@ class SubscribeSerializer(ModelSerializer):
             )
         return data
 
-    def to_representation(self, instance):
+    def to_representation(self, subscribe):
         return SubscribeReadSerializer(
-            instance.get('author'),
+            subscribe.get('author'),
             context=self.context
         ).data
 

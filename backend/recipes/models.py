@@ -70,7 +70,7 @@ class Subscribe(models.Model):
 
     author = models.ForeignKey(
         User,
-        verbose_name='Подписка на автора рецепта',
+        verbose_name='Автор',
         related_name='authors',
         on_delete=models.CASCADE,
         help_text='Подписаться на автора рецепта'
@@ -80,7 +80,7 @@ class Subscribe(models.Model):
         verbose_name='Пользователь',
         related_name='signers',
         on_delete=models.CASCADE,
-        help_text='Текущий пользователь'
+        help_text='Подписывающийся пользователь'
     )
 
     class Meta:
@@ -100,8 +100,7 @@ class Subscribe(models.Model):
 
     def __str__(self):
         return (
-            f'Пользователь {self.user.username} (id: {self.user.id}) '
-            f'подписан на {self.author.username} (id: {self.author.id}).'
+            f'Подписка {self.user.username} на {self.author.username}'
         )
 
 
@@ -147,9 +146,9 @@ class Ingredient(models.Model):
         help_text='Введите название продукта'
     )
     measurement_unit = models.CharField(
-        verbose_name='Мера',
+        verbose_name='Единица измерения',
         max_length=settings.MAX_LENGTH_MEASUREMENT_UNIT,
-        help_text='Введите меру (единицу измерения)'
+        help_text='Единицу измерения'
     )
 
     class Meta:
@@ -158,7 +157,7 @@ class Ingredient(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return self.name[:20]
+        return f'{self.name[:20]}, {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -200,11 +199,15 @@ class Recipe(models.Model):
         upload_to='recipe/images/',
         help_text='Добавьте изображение готового блюда',
     )
+    created_at = models.DateTimeField(
+        verbose_name='Дата создания',
+        auto_now_add=True
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('-id',)
+        ordering = ('-created_at', 'name')
         default_related_name = 'recipes'
 
     def __str__(self):
@@ -248,11 +251,7 @@ class IngredientRecipe(models.Model):
         default_related_name = 'ingredients_recipes'
 
     def __str__(self):
-        return (
-            f'Рецепт: {self.recipe.name[:20]}, '
-            f'продукт: {self.ingredient.name[:20]}, '
-            f'количество: {self.amount}.'
-        )
+        return self.ingredient.name[:20]
 
 
 class UserAndRecipeBase(models.Model):
@@ -297,11 +296,7 @@ class ShoppingCart(UserAndRecipeBase):
         verbose_name_plural = 'Списки покупок'
 
     def __str__(self):
-        return (
-            f'Рецепт {self.recipe.name[:20]} (id: {self.recipe.id}) '
-            'в списке покупок пользователя '
-            f'{self.user.username[:20]} (id: {self.user.id}).'
-        )
+        return self.recipe.name[:20]
 
 
 class Favorite(UserAndRecipeBase):
@@ -315,8 +310,4 @@ class Favorite(UserAndRecipeBase):
         verbose_name_plural = 'Избранные рецепты'
 
     def __str__(self):
-        return (
-            f'Рецепт {self.recipe.name[:20]} (id: {self.recipe.id}) '
-            'в списке избранных пользователя '
-            f'{self.user.username[:20]} (id: {self.user.id}).'
-        )
+        return self.recipe.name[:20]
